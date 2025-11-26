@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+backend/venv/
+backend/__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Build outputs
+dist/
+build/
+release/
+*.egg-info/
+.eggs/
+
+# Runtime generated files
+*.db
+*.sqlite
+*.sqlite3
+logs/
+*.log
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# IDE / Editor
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+coverage/
+.coverage
+htmlcov/
+.pytest_cache/
+.vitest/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# OS
+Thumbs.db
+Desktop.ini
+
+# Keep data files - tracked via Git LFS
+!resources/data/*.csv
+!resources/docs/*.pdf

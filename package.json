@@ -1,0 +1,94 @@
+{
+  "name": "redstring",
+  "version": "0.1.0",
+  "description": "Murder Accountability Project Case Analyzer - Desktop application for analyzing homicide data",
+  "main": "dist/electron/main.js",
+  "author": "Jordan Stella",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n \"BACKEND,ELECTRON\" -c \"bgBlue.bold,bgMagenta.bold\" \"npm run dev:backend\" \"npm run dev:electron\"",
+    "dev:backend": "cd backend && python -m uvicorn main:app --reload --port 5000",
+    "dev:electron": "vite",
+    "build": "tsc && vite build && electron-builder",
+    "build:frontend": "tsc && vite build",
+    "build:electron": "tsc -p electron/tsconfig.json",
+    "build:backend": "cd backend && pyinstaller build.spec",
+    "package": "npm run build && electron-builder build --publish never",
+    "package:mac": "npm run build && electron-builder build --mac --publish never",
+    "package:win": "npm run build && electron-builder build --win --publish never",
+    "package:linux": "npm run build && electron-builder build --linux --publish never",
+    "test": "npm run test:frontend && npm run test:backend",
+    "test:frontend": "vitest run",
+    "test:backend": "cd backend && pytest",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"electron/**/*.ts\""
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "zustand": "^4.4.7",
+    "@tanstack/react-query": "^5.17.0",
+    "@tanstack/react-table": "^8.11.0",
+    "@tanstack/react-virtual": "^3.0.1",
+    "axios": "^1.6.5",
+    "maplibre-gl": "^3.6.2",
+    "recharts": "^2.10.3"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.45",
+    "@types/react-dom": "^18.2.18",
+    "@types/node": "^20.10.6",
+    "@typescript-eslint/eslint-plugin": "^6.16.0",
+    "@typescript-eslint/parser": "^6.16.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "@vitest/ui": "^1.1.1",
+    "@testing-library/react": "^14.1.2",
+    "@testing-library/jest-dom": "^6.1.5",
+    "@testing-library/user-event": "^14.5.1",
+    "concurrently": "^8.2.2",
+    "electron": "^28.1.0",
+    "electron-builder": "^24.9.1",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "jsdom": "^23.0.1",
+    "prettier": "^3.1.1",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.10",
+    "vite-plugin-electron": "^0.28.1",
+    "vitest": "^1.1.1"
+  },
+  "build": {
+    "appId": "com.redstring.app",
+    "productName": "Redstring",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "resources/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.education",
+      "target": ["dmg"]
+    },
+    "win": {
+      "target": ["nsis", "msi"]
+    },
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "category": "Education"
+    },
+    "extraResources": [
+      {
+        "from": "resources",
+        "to": "resources",
+        "filter": ["**/*"]
+      }
+    ]
+  }
+}
