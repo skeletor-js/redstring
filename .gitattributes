@@ -1,0 +1,4 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+resources/data/Murder[[:space:]]Data[[:space:]]SHR65[[:space:]]2023.csv filter=lfs diff=lfs merge=lfs -text
+resources/data/UCR[[:space:]]2023[[:space:]]Data.csv filter=lfs diff=lfs merge=lfs -text
