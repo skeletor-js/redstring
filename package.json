@@ -8,7 +8,7 @@
   "private": true,
   "scripts": {
     "dev": "concurrently -n \"BACKEND,ELECTRON\" -c \"bgBlue.bold,bgMagenta.bold\" \"npm run dev:backend\" \"npm run dev:electron\"",
-    "dev:backend": "cd backend && python -m uvicorn main:app --reload --port 5000",
+    "dev:backend": "cd backend && python3 -m uvicorn main:app --reload --port 5000",
     "dev:electron": "vite",
     "build": "tsc && vite build && electron-builder",
     "build:frontend": "tsc && vite build",

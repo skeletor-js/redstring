@@ -4,7 +4,7 @@
 
 **Redstring** is a desktop application for analyzing homicide data from the Murder Accountability Project (MAP). It helps researchers, journalists, and analysts explore 894,636 homicide records (1976-2023) to identify suspicious clusters of unsolved murders.
 
-**Status**: MVP Phase 1 - Foundation complete, ready for core implementation
+**Status**: MVP Phase 1 - Phase 2 complete (Electron + Python Bridge working)
 **Version**: 0.1.0
 **License**: MIT
 
@@ -115,20 +115,27 @@ npm run package:mac  # macOS DMG
 
 ## Current Phase: MVP Phase 1 (In Progress)
 
-**Foundation Complete** ✅:
+**Phase 1 - Foundation** ✅:
 - Directory structure created
 - Configuration files in place
 - Dependencies installed (Node + Python)
 - Data files organized with Git LFS
 - Documentation complete
 
-**Next Steps** 🔄:
-1. Create Electron main process ([electron/main.ts](electron/main.ts))
-2. Implement Python subprocess spawning ([electron/python-manager.ts](electron/python-manager.ts))
-3. Build FastAPI backend ([backend/main.py](backend/main.py))
-4. Implement data pipeline (CSV → SQLite with transformations)
-5. Build clustering algorithm ([backend/analysis/clustering.py](backend/analysis/clustering.py))
-6. Create React UI (filters, tables, cluster analysis)
+**Phase 2 - Electron + Python Bridge** ✅:
+- Electron main process with window management
+- Python subprocess spawning with health checks
+- FastAPI backend with CORS and logging
+- Secure IPC bridge with context isolation
+- React frontend with backend status display
+- Platform-specific path resolution (dev/prod)
+
+**Next Steps - Phase 3** 🔄:
+1. Create SQLite database schema ([backend/database/schema.py](backend/database/schema.py))
+2. Implement data transformation mappings ([backend/utils/mappings.py](backend/utils/mappings.py))
+3. Build CSV data loader (894,636 records → SQLite)
+4. Create first-run setup flow with progress UI
+5. Add setup endpoints to FastAPI backend
 
 ## Performance Targets
 
