@@ -2,6 +2,7 @@ import { useUIStore } from '../../stores/useUIStore';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { FilterView, CaseDetail } from '../cases';
+import { ClusterView } from '../clusters';
 import '../../styles/layout.css';
 
 export function Layout() {
@@ -12,14 +13,7 @@ export function Layout() {
       case 'filters':
         return <FilterView />;
       case 'clusters':
-        return (
-          <div className="tab-content">
-            <div className="placeholder-view">
-              <h2>Clusters View</h2>
-              <p>Coming in Phase 5 - Clustering Analysis</p>
-            </div>
-          </div>
-        );
+        return <ClusterView />;
       case 'map':
         return (
           <div className="tab-content">
