@@ -54,7 +54,7 @@ export const CaseTable: React.FC = () => {
     fetchNextPage,
   ])
 
-  const showWarning = data?.pages[0]?.large_result_warning ?? false
+  const showWarning = data?.pages[0]?.pagination?.large_result_warning ?? false
 
   if (isLoading) {
     return (

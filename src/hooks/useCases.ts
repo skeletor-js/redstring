@@ -72,7 +72,7 @@ export const useCases = (filters: FilterState, limit: number = 100) => {
       }
     },
     getNextPageParam: (lastPage: CaseListResponse) =>
-      lastPage.has_more ? lastPage.next_cursor : undefined,
+      lastPage.pagination?.has_more ? lastPage.pagination.next_cursor : undefined,
     initialPageParam: undefined as string | undefined,
     staleTime: 1000 * 60, // 1 minute
     gcTime: 1000 * 60 * 5, // 5 minutes (renamed from cacheTime in v5)
@@ -288,7 +288,7 @@ export const useTotalCount = (
   data: InfiniteData<CaseListResponse> | undefined
 ): number => {
   if (!data || !data.pages || data.pages.length === 0) return 0
-  return data.pages[0].total_count
+  return data.pages[0].pagination?.total_count ?? 0
 }
 
 /**

@@ -34,6 +34,21 @@ interface SetupStatus {
 
 type AppState = 'loading' | 'welcome' | 'setup' | 'ready' | 'error'
 
+/**
+ * Check if running in Electron environment.
+ * Returns true if window.electronAPI is available.
+ */
+const isElectron = (): boolean => {
+  return typeof window !== 'undefined' && window.electronAPI !== undefined
+}
+
+/**
+ * Default API URL for browser development mode.
+ * Used when running outside of Electron.
+ * Note: Port 5000 is used by macOS Control Center, so we use 5001.
+ */
+const BROWSER_DEV_API_URL = 'http://localhost:5001'
+
 function App() {
   const [appState, setAppState] = useState<AppState>('loading')
   const [status, setStatus] = useState<BackendStatus>({
@@ -43,6 +58,7 @@ function App() {
     error: null,
   })
   const [_setupStatus, setSetupStatus] = useState<SetupStatus | null>(null)
+  const [isBrowserMode, setIsBrowserMode] = useState<boolean>(false)
 
   // Sync theme to document element
   useSyncTheme()
@@ -50,7 +66,18 @@ function App() {
   useEffect(() => {
     async function initBackend() {
       try {
-        const apiUrl = await window.electronAPI.getApiUrl()
+        let apiUrl: string
+
+        // Check if running in Electron or browser
+        if (isElectron()) {
+          apiUrl = await window.electronAPI.getApiUrl()
+        } else {
+          // Browser fallback mode - use default dev API URL
+          console.log('Running in browser mode - using fallback API URL')
+          setIsBrowserMode(true)
+          apiUrl = BROWSER_DEV_API_URL
+        }
+
         setStatus((prev) => ({ ...prev, apiUrl }))
 
         // Test connection to backend
@@ -87,16 +114,18 @@ function App() {
 
     initBackend()
 
-    // Listen for backend events
-    window.electronAPI.onBackendReady(() => {
-      console.log('Backend ready event received')
-      initBackend()
-    })
+    // Listen for backend events (only in Electron mode)
+    if (isElectron()) {
+      window.electronAPI.onBackendReady(() => {
+        console.log('Backend ready event received')
+        initBackend()
+      })
 
-    window.electronAPI.onBackendError((error) => {
-      setStatus((prev) => ({ ...prev, error, connected: false }))
-      setAppState('error')
-    })
+      window.electronAPI.onBackendError((error) => {
+        setStatus((prev) => ({ ...prev, error, connected: false }))
+        setAppState('error')
+      })
+    }
   }, [])
 
   const handleBeginSetup = () => {

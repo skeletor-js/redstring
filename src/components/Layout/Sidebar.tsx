@@ -1,27 +1,28 @@
-import { useUIStore } from '../../stores/useUIStore';
-import { useFilterStore } from '../../stores/useFilterStore';
-import { useStatsSummary } from '../../hooks/useCases';
-import { DEFAULT_FILTER_STATE } from '../../types/filter';
+import { useUIStore } from '../../stores/useUIStore'
+import { useFilterStore } from '../../stores/useFilterStore'
+import { useStatsSummary } from '../../hooks/useCases'
+import { DEFAULT_FILTER_STATE } from '../../types/filter'
 
 interface SidebarProps {
-  collapsed: boolean;
+  collapsed: boolean
 }
 
 export function Sidebar({ collapsed }: SidebarProps) {
-  const { toggleSidebar } = useUIStore();
-  const { resetFilters, getActiveFilterCount } = useFilterStore();
-  const activeFilterCount = getActiveFilterCount();
+  const { toggleSidebar } = useUIStore()
+  const { resetFilters, getActiveFilterCount } = useFilterStore()
+  const activeFilterCount = getActiveFilterCount()
 
   // Use default filter state for overall stats
-  const { data: stats, isLoading, isError } = useStatsSummary(DEFAULT_FILTER_STATE);
+  const { data: stats, isLoading, isError } = useStatsSummary(DEFAULT_FILTER_STATE)
 
-  const formatNumber = (num: number) => {
-    return num.toLocaleString('en-US');
-  };
+  const formatNumber = (num: number | undefined | null): string => {
+    if (num === undefined || num === null) return '0'
+    return num.toLocaleString('en-US')
+  }
 
   const formatPercentage = (num: number) => {
-    return `${num.toFixed(1)}%`;
-  };
+    return `${num.toFixed(1)}%`
+  }
 
   return (
     <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
@@ -49,15 +50,15 @@ export function Sidebar({ collapsed }: SidebarProps) {
               <div className="stats-grid">
                 <div className="stat-item">
                   <div className="stat-label">Total Cases</div>
-                  <div className="stat-value">{formatNumber(stats.total_count)}</div>
+                  <div className="stat-value">{formatNumber(stats.total_cases)}</div>
                 </div>
                 <div className="stat-item stat-solved">
                   <div className="stat-label">Solved</div>
-                  <div className="stat-value">{formatNumber(stats.solved_count)}</div>
+                  <div className="stat-value">{formatNumber(stats.solved_cases)}</div>
                 </div>
                 <div className="stat-item stat-unsolved">
                   <div className="stat-label">Unsolved</div>
-                  <div className="stat-value">{formatNumber(stats.unsolved_count)}</div>
+                  <div className="stat-value">{formatNumber(stats.unsolved_cases)}</div>
                 </div>
                 <div className="stat-item">
                   <div className="stat-label">Solve Rate</div>
@@ -86,12 +87,14 @@ export function Sidebar({ collapsed }: SidebarProps) {
               <div className="no-filters">No active filters</div>
             ) : (
               <div className="active-filters-info">
-                <p>{activeFilterCount} filter{activeFilterCount !== 1 ? 's' : ''} applied</p>
+                <p>
+                  {activeFilterCount} filter{activeFilterCount !== 1 ? 's' : ''} applied
+                </p>
               </div>
             )}
           </section>
         </div>
       )}
     </aside>
-  );
+  )
 }
