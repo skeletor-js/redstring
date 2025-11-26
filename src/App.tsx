@@ -1,7 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import './App.css';
 import { Welcome } from './components/onboarding/Welcome';
 import { SetupProgress } from './components/onboarding/SetupProgress';
+import { Layout } from './components/Layout/Layout';
+import { useUIStore } from './stores/useUIStore';
+
+// Create a client for React Query
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 5, // 5 minutes
+    },
+  },
+});
 
 interface BackendStatus {
   connected: boolean;
@@ -27,6 +41,7 @@ function App() {
     error: null,
   });
   const [setupStatus, setSetupStatus] = useState<SetupStatus | null>(null);
+  const theme = useUIStore((state) => state.theme);
 
   useEffect(() => {
     async function initBackend() {
@@ -138,49 +153,11 @@ function App() {
 
   // Main application (ready state)
   return (
-    <div className="app">
-      <header className="app-header">
-        <h1>Redstring</h1>
-        <p className="subtitle">Murder Accountability Project Case Analyzer</p>
-      </header>
-
-      <main className="app-main">
-        <div className="status-card">
-          <h2>Backend Status</h2>
-          <div className="status-grid">
-            <div className="status-item">
-              <span className="label">Connection:</span>
-              <span className={`value ${status.connected ? 'success' : 'error'}`}>
-                {status.connected ? '✓ Connected' : '✗ Disconnected'}
-              </span>
-            </div>
-            <div className="status-item">
-              <span className="label">API URL:</span>
-              <span className="value">{status.apiUrl ?? 'N/A'}</span>
-            </div>
-            <div className="status-item">
-              <span className="label">Version:</span>
-              <span className="value">{status.version ?? 'N/A'}</span>
-            </div>
-            <div className="status-item">
-              <span className="label">Records:</span>
-              <span className="value success">
-                {setupStatus?.record_count.toLocaleString() ?? 'N/A'}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="info-card">
-          <h3>Phase 3: Database & Data Pipeline</h3>
-          <p>✅ Database schema created (9 tables)</p>
-          <p>✅ CSV data imported ({setupStatus?.record_count.toLocaleString()} records)</p>
-          <p>✅ Indexes created for performance</p>
-          <p>✅ Setup marked as complete</p>
-          <p>🔄 Ready for Phase 4: Basic API & Frontend Skeleton</p>
-        </div>
-      </main>
-    </div>
+    <QueryClientProvider client={queryClient}>
+      <div className="app" data-theme={theme}>
+        <Layout />
+      </div>
+    </QueryClientProvider>
   );
 }
 

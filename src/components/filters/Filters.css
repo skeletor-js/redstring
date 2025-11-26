@@ -1,0 +1,483 @@
+/* Filter Components - Forensic Minimalism Aesthetic */
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.filter-label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--color-text-primary);
+  text-transform: uppercase;
+}
+
+.filter-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.filter-label-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-link-button {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-accent);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 150ms ease;
+}
+
+.filter-link-button:hover {
+  color: var(--color-text-primary);
+  text-decoration: underline;
+}
+
+.filter-link-button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.filter-label-separator {
+  color: var(--color-border);
+  font-size: 12px;
+}
+
+/* Input Styles */
+.filter-input {
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-family: 'IBM Plex Mono', 'Courier New', monospace;
+  border-radius: 4px;
+  transition: all 150ms ease;
+}
+
+.filter-input:hover {
+  border-color: var(--color-text-secondary);
+}
+
+.filter-input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+}
+
+.filter-input::placeholder {
+  color: var(--color-text-secondary);
+  opacity: 0.6;
+}
+
+/* Radio Group */
+.filter-radio-group {
+  display: flex;
+  gap: 16px;
+}
+
+.filter-radio {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--color-text-primary);
+  transition: color 150ms ease;
+}
+
+.filter-radio:hover {
+  color: var(--color-accent);
+}
+
+.filter-radio input[type='radio'] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--color-accent);
+}
+
+.filter-radio input[type='radio']:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Range Inputs */
+.filter-range {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.filter-range-input {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-range-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+}
+
+.filter-range-separator {
+  padding-bottom: 8px;
+  color: var(--color-text-secondary);
+  font-size: 18px;
+  font-weight: 300;
+}
+
+/* Checkbox Grid */
+.filter-checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-bg-primary);
+}
+
+.filter-checkbox-grid::-webkit-scrollbar {
+  width: 6px;
+}
+
+.filter-checkbox-grid::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.filter-checkbox-grid::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+.filter-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--color-text-primary);
+  transition: background 150ms ease;
+}
+
+.filter-checkbox:hover {
+  background: var(--color-bg-hover);
+}
+
+.filter-checkbox input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--color-accent);
+}
+
+.filter-checkbox input[type='checkbox']:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Chips for Selected Items */
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-bg-primary);
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.filter-chips::-webkit-scrollbar {
+  width: 6px;
+}
+
+.filter-chips::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.filter-chips::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+  font-size: 12px;
+  font-family: 'IBM Plex Mono', 'Courier New', monospace;
+  border-radius: 4px;
+  animation: chipFadeIn 200ms ease;
+}
+
+@keyframes chipFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.filter-chip-remove {
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 150ms ease;
+}
+
+.filter-chip-remove:hover {
+  color: var(--color-danger);
+}
+
+.filter-chip-remove:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Select/Combobox Styles (Headless UI) */
+.filter-select {
+  position: relative;
+}
+
+.filter-select-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  border-radius: 4px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.filter-select-button:hover {
+  border-color: var(--color-text-secondary);
+}
+
+.filter-select-button:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+}
+
+.filter-select-icon {
+  flex-shrink: 0;
+  color: var(--color-text-secondary);
+  transition: transform 200ms ease;
+}
+
+.filter-select[data-open='true'] .filter-select-icon {
+  transform: rotate(180deg);
+}
+
+.filter-select-options {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  animation: dropdownFadeIn 200ms ease;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.filter-select-option {
+  padding: 8px 12px;
+  font-size: 14px;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: background 100ms ease;
+}
+
+.filter-select-option:hover {
+  background: var(--color-bg-hover);
+}
+
+.filter-select-option[data-headlessui-state~='active'] {
+  background: var(--color-bg-hover);
+}
+
+.filter-select-option[data-headlessui-state~='selected'] {
+  background: var(--color-accent);
+  color: var(--color-bg-primary);
+  font-weight: 600;
+}
+
+/* Slider (Custom Range Input) */
+.filter-slider {
+  position: relative;
+  width: 100%;
+  height: 40px;
+  display: flex;
+  align-items: center;
+}
+
+.filter-slider-track {
+  position: absolute;
+  width: 100%;
+  height: 4px;
+  background: var(--color-border);
+  border-radius: 2px;
+}
+
+.filter-slider-range {
+  position: absolute;
+  height: 4px;
+  background: var(--color-accent);
+  border-radius: 2px;
+}
+
+.filter-slider-thumb {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: var(--color-accent);
+  border: 2px solid var(--color-bg-primary);
+  border-radius: 50%;
+  cursor: grab;
+  transition: transform 150ms ease;
+}
+
+.filter-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.filter-slider-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.1);
+}
+
+.filter-slider-thumb:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.filter-slider-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 11px;
+  font-family: 'IBM Plex Mono', 'Courier New', monospace;
+  color: var(--color-text-secondary);
+}
+
+/* Toggle Switch */
+.filter-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filter-toggle-switch {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  background: var(--color-border);
+  border-radius: 11px;
+  cursor: pointer;
+  transition: background 200ms ease;
+}
+
+.filter-toggle-switch[data-checked='true'] {
+  background: var(--color-accent);
+}
+
+.filter-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  background: var(--color-bg-primary);
+  border-radius: 50%;
+  transition: transform 200ms ease;
+}
+
+.filter-toggle-switch[data-checked='true'] .filter-toggle-thumb {
+  transform: translateX(18px);
+}
+
+.filter-toggle-label {
+  font-size: 14px;
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .filter-checkbox-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-range {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .filter-range-separator {
+    display: none;
+  }
+}
