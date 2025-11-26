@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from config import get_log_dir, settings
+from routes import setup
 
 
 def setup_logging() -> None:
@@ -63,6 +64,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Register routers
+app.include_router(setup.router, prefix="/api")
 
 
 @app.get("/health")

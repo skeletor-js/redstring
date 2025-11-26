@@ -27,6 +27,52 @@ body {
   flex-direction: column;
 }
 
+/* Loading and Error Screens */
+.loading-screen,
+.error-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.loading-content,
+.error-content {
+  text-align: center;
+}
+
+.loading-content h1,
+.error-content h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: white;
+}
+
+.loading-content p,
+.error-content p {
+  font-size: 1.2rem;
+  opacity: 0.9;
+  margin-bottom: 2rem;
+}
+
+.error-content button {
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.error-content button:hover {
+  background-color: #dc2626;
+}
+
 .app-header {
   background: linear-gradient(135deg, var(--bg-secondary), var(--bg-card));
   padding: 2rem;
