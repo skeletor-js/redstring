@@ -11,27 +11,12 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from config import get_log_dir, settings
+from config import settings
 from routes import cases, clusters, setup
+from utils.logger import init_logging
 
-
-def setup_logging() -> None:
-    """Configure structured logging to file and console."""
-    log_dir = get_log_dir()
-    log_file = log_dir / "backend.log"
-
-    logging.basicConfig(
-        level=getattr(logging, settings.log_level),
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        handlers=[
-            logging.FileHandler(log_file),
-            logging.StreamHandler(),
-        ],
-    )
-
-
-# Setup logging before app creation
-setup_logging()
+# Initialize logging system with rotation and proper formatting
+init_logging()
 logger = logging.getLogger(__name__)
 
 
@@ -96,6 +81,10 @@ async def not_found_handler(request: Request, exc: Exception):
     Returns:
         JSONResponse with 404 status code
     """
+    logger.warning(
+        f"404 Not Found: {request.method} {request.url.path}",
+        extra={"method": request.method, "path": request.url.path},
+    )
     return JSONResponse(
         status_code=404,
         content={"detail": "Endpoint not found"},
@@ -113,8 +102,47 @@ async def server_error_handler(request: Request, exc: Exception):
     Returns:
         JSONResponse with 500 status code
     """
-    logger.error(f"Internal error: {exc}", exc_info=True)
+    logger.error(
+        f"Internal server error: {request.method} {request.url.path} - {exc}",
+        exc_info=True,
+        extra={
+            "method": request.method,
+            "path": request.url.path,
+            "client": request.client.host if request.client else None,
+        },
+    )
     return JSONResponse(
         status_code=500,
-        content={"detail": "Internal server error"},
+        content={"detail": "Internal server error. Please try again."},
+    )
+
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request: Request, exc: Exception):
+    """Handle all unhandled exceptions.
+
+    This is a catch-all handler for any exceptions not caught elsewhere.
+    Logs the full error and returns a generic 500 response.
+
+    Args:
+        request: The incoming request
+        exc: The exception that was raised
+
+    Returns:
+        JSONResponse with 500 status code
+    """
+    logger.error(
+        f"Unhandled exception: {request.method} {request.url.path} - {exc}",
+        exc_info=True,
+        extra={
+            "method": request.method,
+            "path": request.url.path,
+            "exception_type": type(exc).__name__,
+        },
+    )
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": "An unexpected error occurred. Please try again or contact support if the issue persists."
+        },
     )

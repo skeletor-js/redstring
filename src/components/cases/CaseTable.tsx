@@ -1,36 +1,50 @@
-import React from 'react';
-import { useVirtualizer } from '@tanstack/react-virtual';
-import { useCases, useTotalCount } from '../../hooks/useCases';
-import { useFilterStore } from '../../stores/useFilterStore';
-import { useUIStore } from '../../stores/useUIStore';
-import './CaseTable.css';
+import React from 'react'
+import { useVirtualizer } from '@tanstack/react-virtual'
+import { useCases, useTotalCount } from '../../hooks/useCases'
+import { useFilterStore } from '../../stores/useFilterStore'
+import { useUIStore } from '../../stores/useUIStore'
+import type { CaseListResponse } from '../../types/case'
+import './CaseTable.css'
 
 export const CaseTable: React.FC = () => {
-  const filters = useFilterStore();
-  const { selectCase } = useUIStore();
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError, error } =
-    useCases(filters);
-  const totalCount = useTotalCount(data);
+  const filters = useFilterStore()
+  const { selectCase } = useUIStore()
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isError,
+    error,
+  } = useCases(filters)
 
   const allCases = React.useMemo(
-    () => data?.pages.flatMap((page) => page.cases) ?? [],
+    () => data?.pages.flatMap((page: CaseListResponse) => page.cases) ?? [],
     [data]
-  );
+  )
 
-  const parentRef = React.useRef<HTMLDivElement>(null);
+  const totalCount = useTotalCount(data)
+
+  const parentRef = React.useRef<HTMLDivElement>(null)
 
   const virtualizer = useVirtualizer({
     count: allCases.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => 48,
     overscan: 10,
-  });
+  })
 
   // Fetch next page when scrolled near bottom
   React.useEffect(() => {
-    const lastItem = virtualizer.getVirtualItems().at(-1);
-    if (lastItem && lastItem.index >= allCases.length - 1 && hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
+    const lastItem = virtualizer.getVirtualItems().at(-1)
+    if (
+      lastItem &&
+      lastItem.index >= allCases.length - 1 &&
+      hasNextPage &&
+      !isFetchingNextPage
+    ) {
+      fetchNextPage()
     }
   }, [
     virtualizer.getVirtualItems(),
@@ -38,9 +52,9 @@ export const CaseTable: React.FC = () => {
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
-  ]);
+  ])
 
-  const showWarning = data?.pages[0]?.large_result_warning ?? false;
+  const showWarning = data?.pages[0]?.large_result_warning ?? false
 
   if (isLoading) {
     return (
@@ -48,7 +62,7 @@ export const CaseTable: React.FC = () => {
         <div className="loading-spinner" />
         <p>Loading cases...</p>
       </div>
-    );
+    )
   }
 
   if (isError) {
@@ -57,7 +71,7 @@ export const CaseTable: React.FC = () => {
         <p>Error loading cases:</p>
         <pre>{error?.message || 'Unknown error'}</pre>
       </div>
-    );
+    )
   }
 
   if (allCases.length === 0) {
@@ -66,20 +80,21 @@ export const CaseTable: React.FC = () => {
         <p>No cases match your current filters.</p>
         <p className="case-table-empty-hint">Try adjusting or clearing some filters.</p>
       </div>
-    );
+    )
   }
 
   return (
     <div className="case-table-container">
       {showWarning && (
         <div className="case-table-warning">
-          ⚠️ Large result set ({totalCount.toLocaleString()} cases). Consider narrowing filters
-          for better performance.
+          ⚠️ Large result set ({totalCount.toLocaleString()} cases). Consider narrowing
+          filters for better performance.
         </div>
       )}
 
       <div className="case-table-info">
-        Showing {allCases.length.toLocaleString()} of {totalCount.toLocaleString()} cases
+        Showing {allCases.length.toLocaleString()} of {totalCount.toLocaleString()}{' '}
+        cases
       </div>
 
       <div ref={parentRef} className="case-table-scroll">
@@ -104,7 +119,7 @@ export const CaseTable: React.FC = () => {
             </thead>
             <tbody>
               {virtualizer.getVirtualItems().map((virtualRow) => {
-                const caseItem = allCases[virtualRow.index];
+                const caseItem = allCases[virtualRow.index]
                 return (
                   <tr
                     key={virtualRow.key}
@@ -131,7 +146,7 @@ export const CaseTable: React.FC = () => {
                       </span>
                     </td>
                   </tr>
-                );
+                )
               })}
             </tbody>
           </table>
@@ -145,5 +160,5 @@ export const CaseTable: React.FC = () => {
         </div>
       )}
     </div>
-  );
-};
+  )
+}

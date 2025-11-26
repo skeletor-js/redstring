@@ -1,9 +1,10 @@
-import { useUIStore, type AppTab } from '../../stores/useUIStore';
+import { useUIStore, type AppTab } from '../../stores/useUIStore'
+import { ThemeToggle } from '../ThemeToggle'
 
 interface TabConfig {
-  id: AppTab;
-  label: string;
-  icon: string;
+  id: AppTab
+  label: string
+  icon: string
 }
 
 const tabs: TabConfig[] = [
@@ -12,10 +13,10 @@ const tabs: TabConfig[] = [
   { id: 'map', label: 'Map', icon: '🗺️' },
   { id: 'timeline', label: 'Timeline', icon: '📅' },
   { id: 'stats', label: 'Statistics', icon: '📊' },
-];
+]
 
 export function Header() {
-  const { activeTab, theme, setActiveTab, toggleTheme } = useUIStore();
+  const { activeTab, setActiveTab } = useUIStore()
 
   return (
     <header className="header">
@@ -39,14 +40,7 @@ export function Header() {
       </nav>
 
       <div className="header-actions">
-        <button
-          className="action-button theme-toggle"
-          onClick={toggleTheme}
-          aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-          title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-        >
-          {theme === 'dark' ? '☀️' : '🌙'}
-        </button>
+        <ThemeToggle />
         <button
           className="action-button settings-button"
           aria-label="Settings"
@@ -56,5 +50,5 @@ export function Header() {
         </button>
       </div>
     </header>
-  );
+  )
 }

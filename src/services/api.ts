@@ -5,7 +5,8 @@
  * authentication, and request/response transformation.
  */
 
-import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
+import { handleAxiosError, logError, AppError } from '../utils/errorHandler'
 
 /**
  * Create axios instance with default configuration.
@@ -18,7 +19,7 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-});
+})
 
 /**
  * Request interceptor to dynamically set the API base URL.
@@ -30,19 +31,26 @@ apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     try {
       // Get API URL from Electron main process
-      const apiUrl = await window.electronAPI.getApiUrl();
-      config.baseURL = apiUrl;
+      const apiUrl = await window.electronAPI.getApiUrl()
+      config.baseURL = apiUrl
+
+      // Log request in development
+      if (process.env.NODE_ENV === 'development') {
+        console.debug(`[API Request] ${config.method?.toUpperCase()} ${config.url}`)
+      }
     } catch (error) {
-      console.error('Failed to get API URL:', error);
+      console.error('Failed to get API URL:', error)
+      logError(error, { context: 'get-api-url' })
       // Fallback to localhost in development
-      config.baseURL = 'http://localhost:5000';
+      config.baseURL = 'http://localhost:5000'
     }
-    return config;
+    return config
   },
   (error) => {
-    return Promise.reject(error);
+    logError(error, { context: 'request-interceptor' })
+    return Promise.reject(error)
   }
-);
+)
 
 /**
  * Response interceptor for centralized error handling.
@@ -51,77 +59,46 @@ apiClient.interceptors.request.use(
  */
 apiClient.interceptors.response.use(
   (response) => {
-    // Success responses pass through unchanged
-    return response;
+    // Log successful requests in development
+    if (process.env.NODE_ENV === 'development') {
+      console.debug(
+        `[API Response] ${response.config.method?.toUpperCase()} ${response.config.url} - ${response.status}`
+      )
+    }
+    return response
   },
   (error: AxiosError) => {
-    // Handle different types of errors
-    if (error.response) {
-      // Server responded with error status
-      const status = error.response.status;
-      const data = error.response.data as { detail?: string };
+    // Convert to standardized AppError
+    const appError = handleAxiosError(error)
 
-      console.error(`API Error (${status}):`, data.detail || error.message);
+    // Log error with context
+    logError(error, {
+      url: error.config?.url,
+      method: error.config?.method,
+      status: appError.statusCode,
+      code: appError.code,
+      userMessage: appError.userMessage,
+    })
 
-      // Transform error for consistent handling
-      return Promise.reject({
-        status,
-        message: data.detail || error.message || 'An error occurred',
-        originalError: error,
-      });
-    } else if (error.request) {
-      // Request made but no response received (network error)
-      console.error('Network Error:', error.message);
+    // Log to console for visibility
+    console.error(`[API Error] ${appError.code}:`, appError.userMessage)
 
-      return Promise.reject({
-        status: 0,
-        message: 'Unable to connect to the server. Please check your connection.',
-        originalError: error,
-      });
-    } else {
-      // Error setting up the request
-      console.error('Request Error:', error.message);
-
-      return Promise.reject({
-        status: -1,
-        message: error.message || 'An unexpected error occurred',
-        originalError: error,
-      });
-    }
+    // Reject with AppError for consistent error handling
+    return Promise.reject(appError)
   }
-);
+)
 
 /**
- * Type for API error responses.
+ * Type for API error responses (re-export from errorHandler).
  */
-export interface APIError {
-  status: number;
-  message: string;
-  originalError: AxiosError;
-}
+export type { AppError as APIError }
 
 /**
- * Type guard for API errors.
+ * Type guard for API errors (re-export from errorHandler).
  */
-export const isAPIError = (error: unknown): error is APIError => {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'status' in error &&
-    'message' in error &&
-    'originalError' in error
-  );
-};
+export { isAppError as isAPIError } from '../utils/errorHandler'
 
 /**
- * Helper to extract error message from unknown error types.
+ * Helper to extract error message from unknown error types (re-export from errorHandler).
  */
-export const getErrorMessage = (error: unknown): string => {
-  if (isAPIError(error)) {
-    return error.message;
-  }
-  if (error instanceof Error) {
-    return error.message;
-  }
-  return 'An unknown error occurred';
-};
+export { getUserMessage as getErrorMessage } from '../utils/errorHandler'

@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import './App.css';
-import { Welcome } from './components/onboarding/Welcome';
-import { SetupProgress } from './components/onboarding/SetupProgress';
-import { Layout } from './components/Layout/Layout';
-import { useUIStore } from './stores/useUIStore';
+import { useEffect, useState } from 'react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import './App.css'
+import { Welcome } from './components/onboarding/Welcome'
+import { SetupProgress } from './components/onboarding/SetupProgress'
+import { Layout } from './components/Layout/Layout'
+import { useSyncTheme } from './stores/useUIStore'
+import { ErrorBoundary } from './components/ErrorBoundary'
+import { logError } from './utils/errorHandler'
 
-// Create a client for React Query
+// Create a client for React Query with error handling
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -15,106 +17,108 @@ const queryClient = new QueryClient({
       staleTime: 1000 * 60 * 5, // 5 minutes
     },
   },
-});
+})
 
 interface BackendStatus {
-  connected: boolean;
-  apiUrl: string | null;
-  version: string | null;
-  error: string | null;
+  connected: boolean
+  apiUrl: string | null
+  version: string | null
+  error: string | null
 }
 
 interface SetupStatus {
-  initialized: boolean;
-  record_count: number;
-  database_exists: boolean;
+  initialized: boolean
+  record_count: number
+  database_exists: boolean
 }
 
-type AppState = 'loading' | 'welcome' | 'setup' | 'ready' | 'error';
+type AppState = 'loading' | 'welcome' | 'setup' | 'ready' | 'error'
 
 function App() {
-  const [appState, setAppState] = useState<AppState>('loading');
+  const [appState, setAppState] = useState<AppState>('loading')
   const [status, setStatus] = useState<BackendStatus>({
     connected: false,
     apiUrl: null,
     version: null,
     error: null,
-  });
-  const [setupStatus, setSetupStatus] = useState<SetupStatus | null>(null);
-  const theme = useUIStore((state) => state.theme);
+  })
+  const [_setupStatus, setSetupStatus] = useState<SetupStatus | null>(null)
+
+  // Sync theme to document element
+  useSyncTheme()
 
   useEffect(() => {
     async function initBackend() {
       try {
-        const apiUrl = await window.electronAPI.getApiUrl();
-        setStatus((prev) => ({ ...prev, apiUrl }));
+        const apiUrl = await window.electronAPI.getApiUrl()
+        setStatus((prev) => ({ ...prev, apiUrl }))
 
         // Test connection to backend
-        const healthResponse = await fetch(`${apiUrl}/health`);
-        const healthData = await healthResponse.json();
+        const healthResponse = await fetch(`${apiUrl}/health`)
+        const healthData = await healthResponse.json()
 
         if (healthData.status === 'healthy') {
           setStatus((prev) => ({
             ...prev,
             connected: true,
             version: healthData.version,
-          }));
+          }))
 
           // Check setup status
-          const setupResponse = await fetch(`${apiUrl}/api/setup/status`);
-          const setupData: SetupStatus = await setupResponse.json();
-          setSetupStatus(setupData);
+          const setupResponse = await fetch(`${apiUrl}/api/setup/status`)
+          const setupData: SetupStatus = await setupResponse.json()
+          setSetupStatus(setupData)
 
           if (setupData.initialized) {
-            setAppState('ready');
+            setAppState('ready')
           } else {
-            setAppState('welcome');
+            setAppState('welcome')
           }
         }
       } catch (error) {
-        console.error('Backend initialization error:', error);
+        console.error('Backend initialization error:', error)
         setStatus((prev) => ({
           ...prev,
           error: error instanceof Error ? error.message : 'Connection failed',
-        }));
-        setAppState('error');
+        }))
+        setAppState('error')
       }
     }
 
-    initBackend();
+    initBackend()
 
     // Listen for backend events
     window.electronAPI.onBackendReady(() => {
-      console.log('Backend ready event received');
-      initBackend();
-    });
+      console.log('Backend ready event received')
+      initBackend()
+    })
 
     window.electronAPI.onBackendError((error) => {
-      setStatus((prev) => ({ ...prev, error, connected: false }));
-      setAppState('error');
-    });
-  }, []);
+      setStatus((prev) => ({ ...prev, error, connected: false }))
+      setAppState('error')
+    })
+  }, [])
 
   const handleBeginSetup = () => {
-    setAppState('setup');
-  };
+    setAppState('setup')
+  }
 
   const handleSetupComplete = async () => {
     // Verify setup completed successfully
     try {
       if (status.apiUrl) {
-        const setupResponse = await fetch(`${status.apiUrl}/api/setup/status`);
-        const setupData: SetupStatus = await setupResponse.json();
-        setSetupStatus(setupData);
+        const setupResponse = await fetch(`${status.apiUrl}/api/setup/status`)
+        const setupData: SetupStatus = await setupResponse.json()
+        setSetupStatus(setupData)
 
         if (setupData.initialized) {
-          setAppState('ready');
+          setAppState('ready')
         }
       }
     } catch (error) {
-      console.error('Error verifying setup:', error);
+      console.error('Error verifying setup:', error)
     }
-  };
+  }
 
   // Loading state
   if (appState === 'loading') {
@@ -125,7 +129,7 @@ function App() {
           <p>Connecting to backend...</p>
         </div>
       </div>
-    );
+    )
   }
 
   // Error state
@@ -138,27 +142,37 @@ function App() {
           <button onClick={() => window.location.reload()}>Retry</button>
         </div>
       </div>
-    );
+    )
   }
 
   // Welcome screen (first-time setup)
   if (appState === 'welcome') {
-    return <Welcome onBeginSetup={handleBeginSetup} />;
+    return <Welcome onBeginSetup={handleBeginSetup} />
   }
 
   // Setup in progress
   if (appState === 'setup') {
-    return <SetupProgress onComplete={handleSetupComplete} />;
+    return <SetupProgress onComplete={handleSetupComplete} />
   }
 
   // Main application (ready state)
   return (
-    <QueryClientProvider client={queryClient}>
-      <div className="app" data-theme={theme}>
-        <Layout />
-      </div>
-    </QueryClientProvider>
-  );
+    <ErrorBoundary
+      onError={(error, errorInfo) => {
+        // Log errors to console and file
+        logError(error, {
+          componentStack: errorInfo.componentStack,
+          context: 'app-root-boundary',
+        })
+      }}
+    >
+      <QueryClientProvider client={queryClient}>
+        <div className="app">
+          <Layout />
+        </div>
+      </QueryClientProvider>
+    </ErrorBoundary>
+  )
 }
 
-export default App;
+export default App

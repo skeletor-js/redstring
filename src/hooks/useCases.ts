@@ -2,19 +2,19 @@
  * TanStack Query hooks for case data fetching and caching.
  *
  * Provides React hooks that manage server state for cases, including
- * automatic caching, refetching, and pagination.
+ * automatic caching, refetching, and pagination with enhanced error handling.
  */
 
 import {
   useQuery,
   useInfiniteQuery,
   UseQueryResult,
-  UseInfiniteQueryResult,
   InfiniteData,
-} from '@tanstack/react-query';
-import { FilterState } from '../types/filter';
-import { Case, CaseListResponse, StatsSummary } from '../types/case';
-import { getCases, getCaseById, getStatsSummary, searchCases } from '../services/cases';
+} from '@tanstack/react-query'
+import { FilterState } from '../types/filter'
+import { Case, CaseListResponse, StatsSummary } from '../types/case'
+import { getCases, getCaseById, getStatsSummary, searchCases } from '../services/cases'
+import { AppError, logError } from '../utils/errorHandler'
 
 /**
  * Query key factory for case-related queries.
@@ -30,12 +30,13 @@ export const caseKeys = {
   stats: () => [...caseKeys.all, 'stats'] as const,
   stat: (filters: FilterState) => [...caseKeys.stats(), filters] as const,
   search: (query: string) => [...caseKeys.all, 'search', query] as const,
-};
+}
 
 /**
  * Hook to fetch paginated cases with infinite scroll support.
  *
  * Uses cursor-based pagination. Call `fetchNextPage()` to load more results.
+ * Includes automatic retry logic for transient failures.
  *
  * @param filters - Filter criteria
  * @param limit - Number of records per page (default: 100)
@@ -43,10 +44,15 @@ export const caseKeys = {
  *
  * @example
  * ```tsx
- * const { data, fetchNextPage, hasNextPage, isFetching } = useCases(filters);
+ * const { data, fetchNextPage, hasNextPage, isFetching, error } = useCases(filters);
  *
  * // Access all pages
  * const allCases = data?.pages.flatMap(page => page.cases) ?? [];
+ *
+ * // Handle errors
+ * if (error) {
+ *   return <ErrorMessage>{getUserMessage(error)}</ErrorMessage>;
+ * }
  *
  * // Load more
  * if (hasNextPage && !isFetching) {
@@ -54,24 +60,36 @@ export const caseKeys = {
  * }
  * ```
  */
-export const useCases = (
-  filters: FilterState,
-  limit: number = 100
-): UseInfiniteQueryResult<CaseListResponse, Error> => {
-  return useInfiniteQuery<CaseListResponse, Error, CaseListResponse, readonly ["cases", "list", FilterState], string | undefined>({
+export const useCases = (filters: FilterState, limit: number = 100) => {
+  return useInfiniteQuery({
     queryKey: caseKeys.list(filters),
-    queryFn: ({ pageParam }) => getCases(filters, pageParam, limit),
-    getNextPageParam: (lastPage) =>
+    queryFn: async ({ pageParam }) => {
+      try {
+        return await getCases(filters, pageParam, limit)
+      } catch (error) {
+        logError(error, { filters, pageParam, limit, context: 'useCases' })
+        throw error
+      }
+    },
+    getNextPageParam: (lastPage: CaseListResponse) =>
       lastPage.has_more ? lastPage.next_cursor : undefined,
-    initialPageParam: undefined,
+    initialPageParam: undefined as string | undefined,
     staleTime: 1000 * 60, // 1 minute
     gcTime: 1000 * 60 * 5, // 5 minutes (renamed from cacheTime in v5)
     refetchOnWindowFocus: false,
-  });
-};
+    retry: (failureCount, error) => {
+      // Retry up to 2 times for retryable errors
+      if (failureCount >= 2) return false
+      return (error as unknown as AppError)?.retryable ?? false
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+  })
+}
 
 /**
  * Hook to fetch a single case by ID.
+ *
+ * Includes automatic retry logic and error handling.
  *
  * @param id - Case ID (format: {state}_{year}_{incident})
  * @param enabled - Whether to run the query (default: true)
@@ -82,7 +100,7 @@ export const useCases = (
  * const { data: caseData, isLoading, error } = useCase(caseId);
  *
  * if (isLoading) return <div>Loading...</div>;
- * if (error) return <div>Error: {error.message}</div>;
+ * if (error) return <div>Error: {getUserMessage(error)}</div>;
  *
  * return <CaseDetail case={caseData} />;
  * ```
@@ -90,22 +108,38 @@ export const useCases = (
 export const useCase = (
   id: string,
   enabled: boolean = true
-): UseQueryResult<Case, Error> => {
+): UseQueryResult<Case, AppError> => {
   return useQuery({
     queryKey: caseKeys.detail(id),
-    queryFn: () => getCaseById(id),
+    queryFn: async () => {
+      try {
+        return await getCaseById(id)
+      } catch (error) {
+        logError(error, { caseId: id, context: 'useCase' })
+        throw error
+      }
+    },
     enabled: enabled && id.length > 0,
     staleTime: 1000 * 60 * 5, // 5 minutes (case details don't change often)
     gcTime: 1000 * 60 * 10, // 10 minutes
     refetchOnWindowFocus: false,
-  });
-};
+    retry: (failureCount, error) => {
+      // Don't retry 404 errors (case not found)
+      if ((error as AppError)?.statusCode === 404) return false
+      // Retry up to 2 times for retryable errors
+      if (failureCount >= 2) return false
+      return (error as unknown as AppError)?.retryable ?? false
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+  })
+}
 
 /**
  * Hook to fetch summary statistics for filtered cases.
  *
  * Returns aggregate metrics without loading all cases.
  * Useful for displaying quick stats in the UI.
+ * Includes automatic retry logic for transient failures.
  *
  * @param filters - Filter criteria
  * @param enabled - Whether to run the query (default: true)
@@ -113,9 +147,10 @@ export const useCase = (
  *
  * @example
  * ```tsx
- * const { data: stats, isLoading } = useStatsSummary(filters);
+ * const { data: stats, isLoading, error } = useStatsSummary(filters);
  *
  * if (isLoading) return <Skeleton />;
+ * if (error) return <ErrorMessage>{getUserMessage(error)}</ErrorMessage>;
  *
  * return (
  *   <div>
@@ -128,19 +163,34 @@ export const useCase = (
 export const useStatsSummary = (
   filters: FilterState,
   enabled: boolean = true
-): UseQueryResult<StatsSummary, Error> => {
+): UseQueryResult<StatsSummary, AppError> => {
   return useQuery({
     queryKey: caseKeys.stat(filters),
-    queryFn: () => getStatsSummary(filters),
+    queryFn: async () => {
+      try {
+        return await getStatsSummary(filters)
+      } catch (error) {
+        logError(error, { filters, context: 'useStatsSummary' })
+        throw error
+      }
+    },
     enabled,
     staleTime: 1000 * 60, // 1 minute
     gcTime: 1000 * 60 * 5, // 5 minutes
     refetchOnWindowFocus: false,
-  });
-};
+    retry: (failureCount, error) => {
+      // Retry up to 2 times for retryable errors
+      if (failureCount >= 2) return false
+      return (error as unknown as AppError)?.retryable ?? false
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+  })
+}
 
 /**
  * Hook to search cases by text query.
+ *
+ * Includes automatic retry logic and error handling.
  *
  * @param query - Search query string
  * @param enabled - Whether to run the query (default: true, but skips if query is empty)
@@ -150,12 +200,14 @@ export const useStatsSummary = (
  * @example
  * ```tsx
  * const [searchTerm, setSearchTerm] = useState('');
- * const { data, isLoading } = useSearchCases(searchTerm);
+ * const { data, isLoading, error } = useSearchCases(searchTerm);
  *
  * return (
  *   <div>
  *     <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
- *     {isLoading ? <Spinner /> : <Results cases={data?.cases} />}
+ *     {isLoading && <Spinner />}
+ *     {error && <ErrorMessage>{getUserMessage(error)}</ErrorMessage>}
+ *     {data && <Results cases={data?.cases} />}
  *   </div>
  * );
  * ```
@@ -164,16 +216,29 @@ export const useSearchCases = (
   query: string,
   enabled: boolean = true,
   limit: number = 100
-): UseQueryResult<CaseListResponse, Error> => {
+): UseQueryResult<CaseListResponse, AppError> => {
   return useQuery({
     queryKey: caseKeys.search(query),
-    queryFn: () => searchCases(query, limit),
+    queryFn: async () => {
+      try {
+        return await searchCases(query, limit)
+      } catch (error) {
+        logError(error, { query, limit, context: 'useSearchCases' })
+        throw error
+      }
+    },
     enabled: enabled && query.length > 0,
     staleTime: 1000 * 60, // 1 minute
     gcTime: 1000 * 60 * 5, // 5 minutes
     refetchOnWindowFocus: false,
-  });
-};
+    retry: (failureCount, error) => {
+      // Retry up to 2 times for retryable errors
+      if (failureCount >= 2) return false
+      return (error as unknown as AppError)?.retryable ?? false
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+  })
+}
 
 /**
  * Hook to prefetch cases with given filters.
@@ -199,9 +264,9 @@ export const usePrefetchCases = (_filters: FilterState) => {
   // Simplified for now
   return () => {
     // Prefetching implementation to be added later
-    console.log('Prefetching cases');
-  };
-};
+    console.log('Prefetching cases')
+  }
+}
 
 /**
  * Hook to get the total count from the latest cases query.
@@ -222,9 +287,9 @@ export const usePrefetchCases = (_filters: FilterState) => {
 export const useTotalCount = (
   data: InfiniteData<CaseListResponse> | undefined
 ): number => {
-  if (!data || !data.pages || data.pages.length === 0) return 0;
-  return data.pages[0].total_count;
-};
+  if (!data || !data.pages || data.pages.length === 0) return 0
+  return data.pages[0].total_count
+}
 
 /**
  * Hook to get all loaded cases across all pages.
@@ -245,6 +310,6 @@ export const useTotalCount = (
 export const useAllCases = (
   data: InfiniteData<CaseListResponse> | undefined
 ): Case[] => {
-  if (!data || !data.pages) return [];
-  return data.pages.flatMap((page: CaseListResponse) => page.cases);
-};
+  if (!data || !data.pages) return []
+  return data.pages.flatMap((page: CaseListResponse) => page.cases)
+}

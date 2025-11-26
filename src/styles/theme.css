@@ -1,0 +1,380 @@
+/**
+ * Redstring Theme System - Forensic Minimalism
+ *
+ * This file defines CSS custom properties for both light and dark themes.
+ * Uses data-theme attribute on the html/root element.
+ *
+ * Design Philosophy: "Forensic Minimalism"
+ * - Monospace fonts for data-heavy content
+ * - Clean, high-contrast color palettes
+ * - Technical, analytical aesthetic
+ * - WCAG AA compliant contrast ratios
+ */
+
+/* ====================================
+   ROOT - Base Typography & Spacing
+   ==================================== */
+
+:root {
+  /* Typography */
+  --font-mono:
+    'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Droid Sans Mono',
+    'Source Code Pro', monospace;
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu',
+    'Helvetica Neue', sans-serif;
+
+  /* Spacing Scale */
+  --space-xs: 0.25rem; /* 4px */
+  --space-sm: 0.5rem; /* 8px */
+  --space-md: 1rem; /* 16px */
+  --space-lg: 1.5rem; /* 24px */
+  --space-xl: 2rem; /* 32px */
+  --space-2xl: 3rem; /* 48px */
+
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-base: 200ms ease;
+  --transition-slow: 300ms ease;
+
+  /* Z-Index Scale */
+  --z-base: 1;
+  --z-dropdown: 100;
+  --z-modal: 1000;
+  --z-tooltip: 10000;
+}
+
+/* ====================================
+   DARK THEME (Default)
+   ==================================== */
+
+[data-theme='dark'],
+:root {
+  /* === Background Colors === */
+
+  /* Primary backgrounds - main canvas */
+  --color-bg-primary: #0d1117;
+  --color-bg-secondary: #161b22;
+  --color-bg-tertiary: #21262d;
+
+  /* Interactive states */
+  --color-bg-hover: #30363d;
+  --color-bg-active: #3d444d;
+  --color-bg-selected: #1f6feb1a;
+
+  /* Overlays & modals */
+  --color-bg-overlay: rgba(13, 17, 23, 0.95);
+  --color-bg-backdrop: rgba(0, 0, 0, 0.5);
+
+  /* === Text Colors === */
+
+  --color-text-primary: #e6edf3;
+  --color-text-secondary: #8b949e;
+  --color-text-muted: #6e7681;
+  --color-text-disabled: #484f58;
+  --color-text-inverse: #0d1117;
+
+  /* === Accent Colors === */
+
+  --color-accent: #58a6ff;
+  --color-accent-hover: #79c0ff;
+  --color-accent-active: #409fff;
+  --color-accent-subtle: rgba(88, 166, 255, 0.15);
+
+  /* === Status Colors === */
+
+  /* Success - for solved cases */
+  --color-success: #3fb950;
+  --color-success-hover: #56d364;
+  --color-success-bg: rgba(63, 185, 80, 0.1);
+  --color-success-border: rgba(63, 185, 80, 0.4);
+
+  /* Danger - for unsolved cases */
+  --color-danger: #f85149;
+  --color-danger-hover: #ff6b6b;
+  --color-danger-bg: rgba(248, 81, 73, 0.1);
+  --color-danger-border: rgba(248, 81, 73, 0.4);
+
+  /* Warning - for alerts */
+  --color-warning: #d29922;
+  --color-warning-hover: #e5b234;
+  --color-warning-bg: rgba(210, 153, 34, 0.1);
+  --color-warning-border: rgba(210, 153, 34, 0.4);
+
+  /* Info - for informational states */
+  --color-info: #58a6ff;
+  --color-info-hover: #79c0ff;
+  --color-info-bg: rgba(88, 166, 255, 0.1);
+  --color-info-border: rgba(88, 166, 255, 0.4);
+
+  /* === Border Colors === */
+
+  --color-border: #30363d;
+  --color-border-muted: #21262d;
+  --color-border-hover: #58a6ff;
+  --color-border-focus: #58a6ff;
+
+  /* === Input Colors === */
+
+  --color-input-bg: #0d1117;
+  --color-input-border: #30363d;
+  --color-input-border-focus: #58a6ff;
+  --color-input-text: #e6edf3;
+  --color-input-placeholder: #6e7681;
+
+  /* === Button Colors === */
+
+  /* Primary button */
+  --color-btn-primary-bg: #58a6ff;
+  --color-btn-primary-hover: #79c0ff;
+  --color-btn-primary-active: #409fff;
+  --color-btn-primary-text: #0d1117;
+
+  /* Secondary button */
+  --color-btn-secondary-bg: transparent;
+  --color-btn-secondary-hover: #30363d;
+  --color-btn-secondary-border: #30363d;
+  --color-btn-secondary-text: #8b949e;
+
+  /* Danger button */
+  --color-btn-danger-bg: #f85149;
+  --color-btn-danger-hover: #ff6b6b;
+  --color-btn-danger-text: #ffffff;
+
+  /* === Table Colors === */
+
+  --color-table-header-bg: #161b22;
+  --color-table-header-text: #e6edf3;
+  --color-table-row-bg: #0d1117;
+  --color-table-row-hover: #161b22;
+  --color-table-row-selected: #1f6feb1a;
+  --color-table-border: #30363d;
+
+  /* === Shadow === */
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.6);
+
+  /* === Scrollbar === */
+
+  --scrollbar-track: #0d1117;
+  --scrollbar-thumb: #30363d;
+  --scrollbar-thumb-hover: #58a6ff;
+
+  /* === Chart Colors (for future visualizations) === */
+
+  --color-chart-1: #58a6ff;
+  --color-chart-2: #3fb950;
+  --color-chart-3: #f85149;
+  --color-chart-4: #d29922;
+  --color-chart-5: #bc8cff;
+  --color-chart-6: #f778ba;
+}
+
+/* ====================================
+   LIGHT THEME
+   ==================================== */
+
+[data-theme='light'] {
+  /* === Background Colors === */
+
+  /* Primary backgrounds - main canvas */
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f6f8fa;
+  --color-bg-tertiary: #eaeef2;
+
+  /* Interactive states */
+  --color-bg-hover: #d0d7de;
+  --color-bg-active: #b6bcc3;
+  --color-bg-selected: #ddf4ff;
+
+  /* Overlays & modals */
+  --color-bg-overlay: rgba(255, 255, 255, 0.95);
+  --color-bg-backdrop: rgba(0, 0, 0, 0.3);
+
+  /* === Text Colors === */
+
+  --color-text-primary: #24292f;
+  --color-text-secondary: #57606a;
+  --color-text-muted: #8b949e;
+  --color-text-disabled: #d0d7de;
+  --color-text-inverse: #ffffff;
+
+  /* === Accent Colors === */
+
+  --color-accent: #0969da;
+  --color-accent-hover: #0550ae;
+  --color-accent-active: #033d8b;
+  --color-accent-subtle: rgba(9, 105, 218, 0.1);
+
+  /* === Status Colors === */
+
+  /* Success - for solved cases */
+  --color-success: #1a7f37;
+  --color-success-hover: #26a641;
+  --color-success-bg: rgba(26, 127, 55, 0.1);
+  --color-success-border: rgba(26, 127, 55, 0.4);
+
+  /* Danger - for unsolved cases */
+  --color-danger: #cf222e;
+  --color-danger-hover: #a40e26;
+  --color-danger-bg: rgba(207, 34, 46, 0.1);
+  --color-danger-border: rgba(207, 34, 46, 0.4);
+
+  /* Warning - for alerts */
+  --color-warning: #9a6700;
+  --color-warning-hover: #7d4e00;
+  --color-warning-bg: rgba(154, 103, 0, 0.1);
+  --color-warning-border: rgba(154, 103, 0, 0.4);
+
+  /* Info - for informational states */
+  --color-info: #0969da;
+  --color-info-hover: #0550ae;
+  --color-info-bg: rgba(9, 105, 218, 0.1);
+  --color-info-border: rgba(9, 105, 218, 0.4);
+
+  /* === Border Colors === */
+
+  --color-border: #d0d7de;
+  --color-border-muted: #eaeef2;
+  --color-border-hover: #0969da;
+  --color-border-focus: #0969da;
+
+  /* === Input Colors === */
+
+  --color-input-bg: #ffffff;
+  --color-input-border: #d0d7de;
+  --color-input-border-focus: #0969da;
+  --color-input-text: #24292f;
+  --color-input-placeholder: #8b949e;
+
+  /* === Button Colors === */
+
+  /* Primary button */
+  --color-btn-primary-bg: #0969da;
+  --color-btn-primary-hover: #0550ae;
+  --color-btn-primary-active: #033d8b;
+  --color-btn-primary-text: #ffffff;
+
+  /* Secondary button */
+  --color-btn-secondary-bg: transparent;
+  --color-btn-secondary-hover: #f6f8fa;
+  --color-btn-secondary-border: #d0d7de;
+  --color-btn-secondary-text: #57606a;
+
+  /* Danger button */
+  --color-btn-danger-bg: #cf222e;
+  --color-btn-danger-hover: #a40e26;
+  --color-btn-danger-text: #ffffff;
+
+  /* === Table Colors === */
+
+  --color-table-header-bg: #f6f8fa;
+  --color-table-header-text: #24292f;
+  --color-table-row-bg: #ffffff;
+  --color-table-row-hover: #f6f8fa;
+  --color-table-row-selected: #ddf4ff;
+  --color-table-border: #d0d7de;
+
+  /* === Shadow === */
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.2);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.25);
+
+  /* === Scrollbar === */
+
+  --scrollbar-track: #ffffff;
+  --scrollbar-thumb: #d0d7de;
+  --scrollbar-thumb-hover: #0969da;
+
+  /* === Chart Colors (for future visualizations) === */
+
+  --color-chart-1: #0969da;
+  --color-chart-2: #1a7f37;
+  --color-chart-3: #cf222e;
+  --color-chart-4: #9a6700;
+  --color-chart-5: #8250df;
+  --color-chart-6: #bf3989;
+}
+
+/* ====================================
+   THEME TRANSITIONS
+   ==================================== */
+
+/*
+ * Smooth transitions when switching themes.
+ * Applied to all elements that use theme colors.
+ */
+* {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-duration: var(--transition-base);
+  transition-timing-function: ease;
+}
+
+/* Disable transitions on elements that shouldn't animate */
+a,
+button,
+input,
+select,
+textarea,
+.no-transition,
+*:focus,
+*:active {
+  transition-property: none;
+}
+
+/* Re-enable specific transitions for interactive elements */
+button,
+a,
+input,
+select,
+textarea {
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast),
+    opacity var(--transition-fast);
+}
+
+/* ====================================
+   ACCESSIBILITY
+   ==================================== */
+
+/* Focus visible styles */
+*:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --color-border: currentColor;
+    --color-border-muted: currentColor;
+  }
+}

@@ -5,15 +5,15 @@
  * The expanded sections state is NOT persisted (resets on app restart).
  */
 
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import {
   FilterState,
   FilterUIState,
   FilterSection,
   DEFAULT_FILTER_STATE,
   DEFAULT_FILTER_UI_STATE,
-} from '../types/filter';
+} from '../types/filter'
 
 /**
  * Combined filter store state (data + UI).
@@ -25,33 +25,33 @@ interface FilterStore extends FilterState, FilterUIState {
    * @param key - Filter field name
    * @param value - New value for the field
    */
-  setFilter: <K extends keyof FilterState>(key: K, value: FilterState[K]) => void;
+  setFilter: <K extends keyof FilterState>(key: K, value: FilterState[K]) => void
 
   /**
    * Update multiple filter fields at once.
    *
    * @param updates - Partial filter state to merge
    */
-  setFilters: (updates: Partial<FilterState>) => void;
+  setFilters: (updates: Partial<FilterState>) => void
 
   /**
    * Reset all filters to default state.
    */
-  resetFilters: () => void;
+  resetFilters: () => void
 
   /**
    * Get the number of active (non-default) filters.
    *
    * @returns Count of active filters
    */
-  getActiveFilterCount: () => number;
+  getActiveFilterCount: () => number
 
   /**
    * Toggle a filter section's expanded state.
    *
    * @param section - Section to toggle
    */
-  toggleSection: (section: FilterSection) => void;
+  toggleSection: (section: FilterSection) => void
 
   /**
    * Set a section's expanded state directly.
@@ -59,17 +59,17 @@ interface FilterStore extends FilterState, FilterUIState {
    * @param section - Section to update
    * @param expanded - New expanded state
    */
-  setSection: (section: FilterSection, expanded: boolean) => void;
+  setSection: (section: FilterSection, expanded: boolean) => void
 
   /**
    * Expand all filter sections.
    */
-  expandAllSections: () => void;
+  expandAllSections: () => void
 
   /**
    * Collapse all filter sections.
    */
-  collapseAllSections: () => void;
+  collapseAllSections: () => void
 }
 
 /**
@@ -90,49 +90,49 @@ export const useFilterStore = create<FilterStore>()(
       // === Actions ===
 
       setFilter: <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
-        set({ [key]: value });
+        set({ [key]: value })
       },
 
       setFilters: (updates: Partial<FilterState>) => {
-        set(updates);
+        set(updates)
       },
 
       resetFilters: () => {
-        set(DEFAULT_FILTER_STATE);
+        set(DEFAULT_FILTER_STATE)
       },
 
       getActiveFilterCount: () => {
-        const state = get();
-        let count = 0;
+        const state = get()
+        let count = 0
 
         // Count non-default filters
-        if (state.states.length > 0) count++;
+        if (state.states.length > 0) count++
         if (
           state.yearRange[0] !== DEFAULT_FILTER_STATE.yearRange[0] ||
           state.yearRange[1] !== DEFAULT_FILTER_STATE.yearRange[1]
         ) {
-          count++;
+          count++
         }
-        if (state.solved !== DEFAULT_FILTER_STATE.solved) count++;
-        if (state.vicSex.length > 0) count++;
+        if (state.solved !== DEFAULT_FILTER_STATE.solved) count++
+        if (state.vicSex.length > 0) count++
         if (
           state.vicAgeRange[0] !== DEFAULT_FILTER_STATE.vicAgeRange[0] ||
           state.vicAgeRange[1] !== DEFAULT_FILTER_STATE.vicAgeRange[1]
         ) {
-          count++;
+          count++
         }
-        if (!state.includeUnknownAge) count++;
-        if (state.vicRace.length > 0) count++;
-        if (state.vicEthnic.length > 0) count++;
-        if (state.weapon.length > 0) count++;
-        if (state.relationship.length > 0) count++;
-        if (state.circumstance.length > 0) count++;
-        if (state.counties.length > 0) count++;
-        if (state.msa.length > 0) count++;
-        if (state.searchQuery.length > 0) count++;
-        if (state.caseId.length > 0) count++;
+        if (!state.includeUnknownAge) count++
+        if (state.vicRace.length > 0) count++
+        if (state.vicEthnic.length > 0) count++
+        if (state.weapon.length > 0) count++
+        if (state.relationship.length > 0) count++
+        if (state.circumstance.length > 0) count++
+        if (state.counties.length > 0) count++
+        if (state.msa.length > 0) count++
+        if (state.agencySearch.length > 0) count++
+        if (state.caseId.length > 0) count++
 
-        return count;
+        return count
       },
 
       toggleSection: (section: FilterSection) => {
@@ -141,7 +141,7 @@ export const useFilterStore = create<FilterStore>()(
             ...state.expandedSections,
             [section]: !state.expandedSections[section],
           },
-        }));
+        }))
       },
 
       setSection: (section: FilterSection, expanded: boolean) => {
@@ -150,7 +150,7 @@ export const useFilterStore = create<FilterStore>()(
             ...state.expandedSections,
             [section]: expanded,
           },
-        }));
+        }))
       },
 
       expandAllSections: () => {
@@ -162,7 +162,7 @@ export const useFilterStore = create<FilterStore>()(
             geography: true,
             search: true,
           },
-        });
+        })
       },
 
       collapseAllSections: () => {
@@ -174,7 +174,7 @@ export const useFilterStore = create<FilterStore>()(
             geography: false,
             search: false,
           },
-        });
+        })
       },
     }),
     {
@@ -192,11 +192,12 @@ export const useFilterStore = create<FilterStore>()(
         weapon: state.weapon,
         relationship: state.relationship,
         circumstance: state.circumstance,
+        situation: state.situation,
         counties: state.counties,
         msa: state.msa,
-        searchQuery: state.searchQuery,
+        agencySearch: state.agencySearch,
         caseId: state.caseId,
       }),
     }
   )
-);
+)

@@ -1,16 +1,16 @@
-import { useEffect, useState } from 'react';
-import './SetupProgress.css';
+import { useEffect, useState } from 'react'
+import './SetupProgress.css'
 
 interface ProgressResponse {
-  current: number;
-  total: number;
-  stage: string;
-  percentage: number;
-  error?: string | null;
+  current: number
+  total: number
+  stage: string
+  percentage: number
+  error?: string | null
 }
 
 interface SetupProgressProps {
-  onComplete: () => void;
+  onComplete: () => void
 }
 
 const STAGE_LABELS: Record<string, string> = {
@@ -21,7 +21,7 @@ const STAGE_LABELS: Record<string, string> = {
   indexing: 'Creating indexes for fast queries...',
   complete: 'Setup complete!',
   error: 'Setup failed',
-};
+}
 
 export function SetupProgress({ onComplete }: SetupProgressProps) {
   const [progress, setProgress] = useState<ProgressResponse>({
@@ -30,88 +30,83 @@ export function SetupProgress({ onComplete }: SetupProgressProps) {
     stage: 'idle',
     percentage: 0,
     error: null,
-  });
-  const [setupError, setSetupError] = useState<string | null>(null);
+  })
+  const [setupError, setSetupError] = useState<string | null>(null)
 
   useEffect(() => {
-    let pollInterval: NodeJS.Timeout | null = null;
-    let isSetupRunning = false;
+    let pollInterval: NodeJS.Timeout | null = null
 
     const startSetup = async () => {
       try {
-        isSetupRunning = true;
-
         // Start the setup process
         const response = await fetch('http://localhost:5000/api/setup/initialize', {
           method: 'POST',
-        });
+        })
 
         if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.detail || 'Setup failed');
+          const error = await response.json()
+          throw new Error(error.detail || 'Setup failed')
         }
 
         // Setup completed successfully
-        await response.json();
+        await response.json()
 
         // Stop polling
         if (pollInterval) {
-          clearInterval(pollInterval);
+          clearInterval(pollInterval)
         }
 
         // Notify parent component
         setTimeout(() => {
-          onComplete();
-        }, 1000);
+          onComplete()
+        }, 1000)
       } catch (error) {
-        console.error('Setup error:', error);
-        setSetupError(error instanceof Error ? error.message : 'Unknown error');
+        console.error('Setup error:', error)
+        setSetupError(error instanceof Error ? error.message : 'Unknown error')
 
         if (pollInterval) {
-          clearInterval(pollInterval);
+          clearInterval(pollInterval)
         }
-      } finally {
-        isSetupRunning = false;
       }
-    };
+    }
 
     const pollProgress = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/setup/progress');
+        const response = await fetch('http://localhost:5000/api/setup/progress')
         if (response.ok) {
-          const data: ProgressResponse = await response.json();
-          setProgress(data);
+          const data: ProgressResponse = await response.json()
+          setProgress(data)
 
           if (data.error) {
-            setSetupError(data.error);
+            setSetupError(data.error)
             if (pollInterval) {
-              clearInterval(pollInterval);
+              clearInterval(pollInterval)
             }
           }
         }
       } catch (error) {
-        console.error('Error polling progress:', error);
+        console.error('Error polling progress:', error)
       }
-    };
+    }
 
     // Start polling for progress updates
-    pollInterval = setInterval(pollProgress, 500);
+    pollInterval = setInterval(pollProgress, 500)
 
     // Start the setup process
-    startSetup();
+    startSetup()
 
     // Cleanup on unmount
     return () => {
       if (pollInterval) {
-        clearInterval(pollInterval);
+        clearInterval(pollInterval)
       }
-    };
-  }, [onComplete]);
+    }
+  }, [onComplete])
 
   const retrySetup = () => {
-    setSetupError(null);
-    window.location.reload();
-  };
+    setSetupError(null)
+    window.location.reload()
+  }
 
   if (setupError) {
     return (
@@ -124,7 +119,7 @@ export function SetupProgress({ onComplete }: SetupProgressProps) {
           </button>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -146,7 +141,9 @@ export function SetupProgress({ onComplete }: SetupProgressProps) {
         </div>
 
         <div className="progress-details">
-          <p className="stage-label">{STAGE_LABELS[progress.stage] || progress.stage}</p>
+          <p className="stage-label">
+            {STAGE_LABELS[progress.stage] || progress.stage}
+          </p>
           {progress.stage === 'importing' && (
             <p className="record-count">
               Processing record {progress.current.toLocaleString()} of{' '}
@@ -158,11 +155,12 @@ export function SetupProgress({ onComplete }: SetupProgressProps) {
         <div className="setup-tips">
           <p className="tip-title">Did you know?</p>
           <p className="tip-text">
-            The Murder Accountability Project has collected data on over 894,000 homicides
-            spanning from 1976 to 2023 - the most comprehensive database of its kind.
+            The Murder Accountability Project has collected data on over 894,000
+            homicides spanning from 1976 to 2023 - the most comprehensive database of
+            its kind.
           </p>
         </div>
       </div>
     </div>
-  );
+  )
 }

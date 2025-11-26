@@ -1,0 +1,293 @@
+/**
+ * ThemeToggle Styles - Forensic Minimalism
+ *
+ * Investigation mode switcher with a technical, data-driven aesthetic.
+ * Avoids generic toggle designs in favor of something memorable.
+ */
+
+.theme-toggle {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  user-select: none;
+  font-family: var(--font-mono);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 4px;
+}
+
+/* ==========================================
+   Toggle Track - Main interactive element
+   ========================================== */
+
+.theme-toggle__track {
+  position: relative;
+  width: 140px;
+  height: 32px;
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  padding: 3px;
+  transition: all var(--transition-base);
+}
+
+.theme-toggle:hover .theme-toggle__track {
+  border-color: var(--color-border-hover);
+  box-shadow: var(--shadow-sm);
+}
+
+.theme-toggle:active .theme-toggle__track {
+  transform: scale(0.98);
+}
+
+/* ==========================================
+   Mode Labels
+   ========================================== */
+
+.theme-toggle__label {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--color-text-muted);
+  transition: all var(--transition-fast);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.theme-toggle__label--left {
+  left: 12px;
+}
+
+.theme-toggle__label--right {
+  right: 12px;
+}
+
+/* Dim inactive label */
+[data-theme='dark'] .theme-toggle__label--left,
+[data-theme='light'] .theme-toggle__label--right {
+  opacity: 0.4;
+}
+
+/* Brighten active label */
+[data-theme='light'] .theme-toggle__label--left,
+[data-theme='dark'] .theme-toggle__label--right {
+  opacity: 1;
+  color: var(--color-text-primary);
+}
+
+/* ==========================================
+   Sliding Indicator - The actual switch
+   ========================================== */
+
+.theme-toggle__indicator {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 26px;
+  height: 26px;
+  background-color: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-base) cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* Bounce easing for playful feel */
+  box-shadow: var(--shadow-xs);
+  z-index: 2;
+}
+
+/* Slide to right when dark mode */
+.theme-toggle__indicator--dark {
+  left: calc(100% - 29px);
+  background-color: var(--color-bg-secondary);
+}
+
+.theme-toggle:hover .theme-toggle__indicator {
+  box-shadow: var(--shadow-sm);
+  border-color: var(--color-border-hover);
+}
+
+/* ==========================================
+   Icon inside indicator
+   ========================================== */
+
+.theme-toggle__icon {
+  color: var(--color-text-secondary);
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.theme-toggle:hover .theme-toggle__icon {
+  color: var(--color-text-primary);
+}
+
+/* Rotate icon slightly on toggle for dynamism */
+.theme-toggle__indicator--dark .theme-toggle__icon {
+  transform: rotate(-10deg);
+}
+
+/* ==========================================
+   Status Bar - Shows current mode
+   ========================================== */
+
+.theme-toggle__status {
+  position: relative;
+  height: 14px;
+  overflow: hidden;
+}
+
+.theme-toggle__status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border-muted);
+  border-radius: var(--radius-sm);
+  position: relative;
+}
+
+/* Subtle scan line effect */
+.theme-toggle__status-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--color-accent) 50%,
+    transparent 100%
+  );
+  opacity: 0.1;
+  animation: scan 3s ease-in-out infinite;
+}
+
+@keyframes scan {
+  0%,
+  100% {
+    left: -100%;
+  }
+  50% {
+    left: 100%;
+  }
+}
+
+.theme-toggle__status-text {
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  position: relative;
+  z-index: 1;
+}
+
+/* Subtle glow effect on hover */
+.theme-toggle:hover .theme-toggle__status-bar {
+  border-color: var(--color-border);
+}
+
+.theme-toggle:hover .theme-toggle__status-text {
+  color: var(--color-text-secondary);
+}
+
+/* ==========================================
+   Accessibility - Reduced Motion
+   ========================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-toggle__indicator {
+    transition: left var(--transition-fast);
+  }
+
+  .theme-toggle__status-bar::before {
+    animation: none;
+  }
+
+  .theme-toggle__icon {
+    transform: none !important;
+  }
+}
+
+/* ==========================================
+   Compact variant (optional, for space-constrained layouts)
+   ========================================== */
+
+.theme-toggle--compact {
+  width: auto;
+}
+
+.theme-toggle--compact .theme-toggle__track {
+  width: 48px;
+  height: 24px;
+  padding: 2px;
+}
+
+.theme-toggle--compact .theme-toggle__indicator {
+  width: 20px;
+  height: 20px;
+  top: 2px;
+  left: 2px;
+}
+
+.theme-toggle--compact .theme-toggle__indicator--dark {
+  left: calc(100% - 22px);
+}
+
+.theme-toggle--compact .theme-toggle__label,
+.theme-toggle--compact .theme-toggle__status {
+  display: none;
+}
+
+.theme-toggle--compact .theme-toggle__icon {
+  width: 10px;
+  height: 10px;
+}
+
+/* ==========================================
+   Tooltip enhancement (optional)
+   ========================================== */
+
+.theme-toggle[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 10px;
+  background-color: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: var(--shadow-md);
+  z-index: var(--z-tooltip);
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
