@@ -14,60 +14,60 @@ export interface FilterState {
   // === Primary Filters ===
 
   /** Selected states (empty = all states) */
-  states: string[];
+  states: string[]
 
   /** Year range [min, max] (default: [1976, 2023]) */
-  yearRange: [number, number];
+  yearRange: [number, number]
 
   /** Solved status filter */
-  solved: 'all' | 'solved' | 'unsolved';
+  solved: 'all' | 'solved' | 'unsolved'
 
   // === Victim Demographics ===
 
   /** Victim sex (empty = all) */
-  vicSex: string[];
+  vicSex: string[]
 
   /** Victim age range [min, max] (default: [0, 99]) */
-  vicAgeRange: [number, number];
+  vicAgeRange: [number, number]
 
   /** Include cases with unknown age (999) */
-  includeUnknownAge: boolean;
+  includeUnknownAge: boolean
 
   /** Victim race (empty = all) */
-  vicRace: string[];
+  vicRace: string[]
 
   /** Victim ethnicity (empty = all) */
-  vicEthnic: string[];
+  vicEthnic: string[]
 
   // === Crime Details ===
 
   /** Weapon types (empty = all) */
-  weapon: string[];
+  weapon: string[]
 
   /** Relationship to offender (empty = all) */
-  relationship: string[];
+  relationship: string[]
 
   /** Circumstance (empty = all) */
-  circumstance: string[];
+  circumstance: string[]
 
   /** Situation (empty = all) */
-  situation: string[];
+  situation: string[]
 
   // === Geography ===
 
   /** County FIPS codes (empty = all) */
-  counties: string[];
+  counties: string[]
 
   /** MSA (Metropolitan Statistical Area) codes (empty = all) */
-  msa: string[];
+  msa: string[]
 
   // === Search ===
 
   /** Agency name search (substring match) */
-  agencySearch: string;
+  agencySearch: string
 
   /** Case ID for direct lookup */
-  caseId: string;
+  caseId: string
 }
 
 /**
@@ -76,12 +76,12 @@ export interface FilterState {
 export interface FilterUIState {
   /** Which sections are expanded in the filter panel */
   expandedSections: {
-    primary: boolean;
-    victim: boolean;
-    crime: boolean;
-    geography: boolean;
-    search: boolean;
-  };
+    primary: boolean
+    victim: boolean
+    crime: boolean
+    geography: boolean
+    search: boolean
+  }
 }
 
 // =============================================================================
@@ -145,12 +145,12 @@ export const STATES = [
   'WEST VIRGINIA',
   'WISCONSIN',
   'WYOMING',
-] as const;
+] as const
 
 /**
  * Victim sex options.
  */
-export const VIC_SEX_OPTIONS = ['Male', 'Female', 'Unknown'] as const;
+export const VIC_SEX_OPTIONS = ['Male', 'Female', 'Unknown'] as const
 
 /**
  * Victim race options.
@@ -163,16 +163,18 @@ export const VIC_RACE_OPTIONS = [
   'American Indian or Alaskan Native',
   'Asian or Pacific Islander',
   'Unknown',
-] as const;
+] as const
 
 /**
  * Victim ethnicity options.
+ *
+ * Note: These are the exact values from the database.
  */
 export const VIC_ETHNIC_OPTIONS = [
-  'Hispanic or Latino',
-  'Not Hispanic or Latino',
-  'Unknown',
-] as const;
+  'Hispanic origin',
+  'Not of Hispanic origin',
+  'Unknown or not reported',
+] as const
 
 /**
  * Weapon type options (all 18 types).
@@ -198,7 +200,7 @@ export const WEAPON_TYPES = [
   'Asphyxiation - includes death by gas',
   'Other or type unknown',
   'Weapon Not Reported',
-] as const;
+] as const
 
 /**
  * Relationship options (victim to offender).
@@ -224,21 +226,47 @@ export const RELATIONSHIP_OPTIONS = [
   'Employee',
   'Employer',
   'Unknown',
-] as const;
+] as const
 
 /**
  * Circumstance options.
  *
- * Note: Full list to be populated from dataset analysis.
+ * Note: These are the exact values from the database.
  */
 export const CIRCUMSTANCE_OPTIONS = [
-  'Argument',
-  'Felony type',
-  'Gangland',
-  'Juvenile gang',
+  'Other arguments',
+  'Argument over money or property',
+  'Lovers triangle',
+  'Brawl due to influence of alcohol',
+  'Brawl due to influence of narcotics',
+  'All suspected felony type',
+  'Robbery',
+  'Burglary',
+  'Larceny',
+  'Motor vehicle theft',
+  'Arson',
+  'Rape',
+  'Other sex offense',
+  'Narcotic drug laws',
+  'Gambling',
+  'Prostitution and commercialized vice',
+  'Gangland killings',
+  'Juvenile gang killings',
+  'Institutional killings',
+  'Sniper attack',
+  'Felon killed by police',
+  'Felon killed by private citizen',
+  'Child killed by babysitter',
+  'Abortion',
+  'Children playing with gun',
+  'Gun-cleaning death - other than self',
+  'Victim shot in hunting accident',
+  'Other negligent handling of gun',
+  'All other manslaughter by negligence',
   'Other',
-  'Unknown',
-] as const;
+  'Other - not specified',
+  'Circumstances undetermined',
+] as const
 
 /**
  * Situation options (victim/offender count combinations).
@@ -250,7 +278,7 @@ export const SITUATION_OPTIONS = [
   'Multiple victims/multiple offenders',
   'Single victim/unknown offenders',
   'Multiple victims/unknown offenders',
-] as const;
+] as const
 
 /**
  * Default filter state (no filters applied).
@@ -272,7 +300,7 @@ export const DEFAULT_FILTER_STATE: FilterState = {
   msa: [],
   agencySearch: '',
   caseId: '',
-};
+}
 
 /**
  * Default UI state (all sections collapsed).
@@ -285,22 +313,22 @@ export const DEFAULT_FILTER_UI_STATE: FilterUIState = {
     geography: false,
     search: false,
   },
-};
+}
 
 /**
  * Year range bounds.
  */
-export const YEAR_MIN = 1976;
-export const YEAR_MAX = 2023;
+export const YEAR_MIN = 1976
+export const YEAR_MAX = 2023
 
 /**
  * Age range bounds.
  */
-export const AGE_MIN = 0;
-export const AGE_MAX = 99;
-export const AGE_UNKNOWN = 999;
+export const AGE_MIN = 0
+export const AGE_MAX = 99
+export const AGE_UNKNOWN = 999
 
 /**
  * Type guard for filter section keys.
  */
-export type FilterSection = keyof FilterUIState['expandedSections'];
+export type FilterSection = keyof FilterUIState['expandedSections']
