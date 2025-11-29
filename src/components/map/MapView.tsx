@@ -14,6 +14,7 @@ import { useMap as useMapData } from '../../hooks/useMap'
 import { MapControls } from './MapControls'
 import { MapLegend } from './MapLegend'
 import { CountyLayer } from './CountyLayer'
+import { ChoroplethLayer } from './ChoroplethLayer'
 import { CaseMarkers } from './CaseMarkers'
 import { HeatmapLayer } from './HeatmapLayer'
 import './MapView.css'
@@ -174,8 +175,13 @@ export const MapView: React.FC<MapViewProps> = ({ className }) => {
         {/* Track zoom level */}
         <ZoomHandler onZoomChange={setZoomLevel} />
 
-        {/* County layer - visible in choropleth and markers mode */}
-        {viewMode !== 'heatmap' && (
+        {/* Choropleth layer - county polygons filled with color based on metric */}
+        {viewMode === 'choropleth' && (
+          <ChoroplethLayer counties={countyData.counties} colorMetric={colorMetric} />
+        )}
+
+        {/* County layer (circle markers) - visible in markers or heatmap mode */}
+        {viewMode !== 'choropleth' && (
           <CountyLayer
             counties={countyData.counties}
             colorMetric={colorMetric}
