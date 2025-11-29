@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from config import settings
-from routes import cases, clusters, setup
+from routes import cases, clusters, map, setup, statistics, timeline
 from utils.logger import init_logging
 
 # Initialize logging system with rotation and proper formatting
@@ -54,6 +54,9 @@ app.add_middleware(
 app.include_router(setup.router, prefix="/api")
 app.include_router(cases.router, prefix="/api")
 app.include_router(clusters.router)
+app.include_router(map.router)
+app.include_router(timeline.router)
+app.include_router(statistics.router)
 
 
 @app.get("/health")

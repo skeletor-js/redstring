@@ -10,6 +10,7 @@ backend/__pycache__/
 
 # Build outputs
 dist/
+dist-electron/
 build/
 release/
 *.egg-info/

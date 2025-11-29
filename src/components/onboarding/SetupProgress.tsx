@@ -39,7 +39,7 @@ export function SetupProgress({ onComplete }: SetupProgressProps) {
     const startSetup = async () => {
       try {
         // Start the setup process
-        const response = await fetch('http://localhost:5000/api/setup/initialize', {
+        const response = await fetch('http://localhost:5001/api/setup/initialize', {
           method: 'POST',
         })
 
@@ -72,7 +72,7 @@ export function SetupProgress({ onComplete }: SetupProgressProps) {
 
     const pollProgress = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/setup/progress')
+        const response = await fetch('http://localhost:5001/api/setup/progress')
         if (response.ok) {
           const data: ProgressResponse = await response.json()
           setProgress(data)

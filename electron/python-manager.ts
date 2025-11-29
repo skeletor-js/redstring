@@ -16,18 +16,41 @@ import { app } from 'electron'
 
 export class PythonManager {
   private process: ChildProcess | null = null
-  private port: number = 5000
+  private port: number = 5001
   private restartAttempts: number = 0
   private readonly maxRestartAttempts: number = 3
-  private readonly portRangeStart: number = 5000
+  private readonly portRangeStart: number = 5001
   private readonly portRangeEnd: number = 5099
   private isShuttingDown: boolean = false
+  private isDevMode: boolean = false
+  private readonly devModePort: number = 5000 // Port used by npm run dev:backend
 
   /**
    * Start the Python backend process.
+   * In development mode, connects to existing backend started by npm run dev:backend.
+   * In production mode, spawns and manages the bundled Python backend.
    */
   async start(): Promise<void> {
     console.log('[PythonManager] Starting Python backend...')
+
+    // Check if we're in development mode (Vite dev server running)
+    const isDev = !app.isPackaged
+
+    if (isDev) {
+      // In development, check if backend is already running on dev port
+      const devBackendRunning = await this.checkHealthAt(this.devModePort)
+      if (devBackendRunning) {
+        console.log(
+          `[PythonManager] Development mode: Using existing backend on port ${this.devModePort}`
+        )
+        this.port = this.devModePort
+        this.isDevMode = true
+        return
+      }
+      console.log(
+        '[PythonManager] Development mode: No existing backend found, starting new one...'
+      )
+    }
 
     // Find available port
     this.port = await this.findAvailablePort()
@@ -42,10 +65,14 @@ export class PythonManager {
     console.log(`[PythonManager] Backend path: ${backendPath}`)
     console.log(`[PythonManager] Resources path: ${resourcesPath}`)
 
-    // Spawn Python process
-    this.process = spawn(
-      pythonPath,
-      [
+    // Build args - different for dev vs production
+    let args: string[]
+    if (app.isPackaged) {
+      // Production: PyInstaller bundle, run directly with server args
+      args = ['--host', '127.0.0.1', '--port', this.port.toString()]
+    } else {
+      // Development: use python3 with uvicorn module
+      args = [
         '-m',
         'uvicorn',
         'main:app',
@@ -54,16 +81,18 @@ export class PythonManager {
         '--port',
         this.port.toString(),
         '--reload',
-      ],
-      {
-        cwd: backendPath,
-        env: {
-          ...process.env,
-          RESOURCES_PATH: resourcesPath,
-          PYTHONUNBUFFERED: '1',
-        },
-      }
-    )
+      ]
+    }
+
+    // Spawn Python process
+    this.process = spawn(pythonPath, args, {
+      cwd: backendPath,
+      env: {
+        ...process.env,
+        RESOURCES_PATH: resourcesPath,
+        PYTHONUNBUFFERED: '1',
+      },
+    })
 
     this.setupProcessHandlers()
     await this.waitForHealth()
@@ -100,21 +129,48 @@ export class PythonManager {
   }
 
   /**
-   * Wait for the backend to be healthy.
+   * Check if backend is healthy at a specific port.
    */
-  private async waitForHealth(timeoutMs: number = 10000): Promise<void> {
+  private async checkHealthAt(port: number): Promise<boolean> {
+    try {
+      const response = await axios.get(`http://127.0.0.1:${port}/health`, {
+        timeout: 2000,
+      })
+      return response.data.status === 'healthy'
+    } catch (error) {
+      return false
+    }
+  }
+
+  /**
+   * Wait for the backend to be healthy.
+   * Increased timeout to 30 seconds for production where backend may need
+   * more time to initialize database connections and load data.
+   */
+  private async waitForHealth(timeoutMs: number = 30000): Promise<void> {
     const startTime = Date.now()
     const apiUrl = this.getApiUrl()
 
+    console.log(
+      `[PythonManager] Waiting for backend health (timeout: ${timeoutMs}ms)...`
+    )
+
     while (Date.now() - startTime < timeoutMs) {
       try {
-        const response = await axios.get(`${apiUrl}/health`, { timeout: 1000 })
+        const response = await axios.get(`${apiUrl}/health`, { timeout: 2000 })
         if (response.data.status === 'healthy') {
-          console.log('[PythonManager] Health check passed')
+          const elapsed = Date.now() - startTime
+          console.log(`[PythonManager] Health check passed after ${elapsed}ms`)
           return
         }
       } catch (error) {
-        // Keep trying
+        // Keep trying - log progress every 5 seconds
+        const elapsed = Date.now() - startTime
+        if (elapsed > 0 && elapsed % 5000 < 500) {
+          console.log(
+            `[PythonManager] Still waiting for backend... (${Math.round(elapsed / 1000)}s)`
+          )
+        }
       }
       await new Promise((resolve) => setTimeout(resolve, 500))
     }
@@ -142,9 +198,7 @@ export class PythonManager {
     })
 
     this.process.on('exit', (code, signal) => {
-      console.log(
-        `[PythonManager] Process exited with code ${code}, signal ${signal}`
-      )
+      console.log(`[PythonManager] Process exited with code ${code}, signal ${signal}`)
       if (!this.isShuttingDown) {
         this.handleCrash()
       }
@@ -164,9 +218,7 @@ export class PythonManager {
       console.log(
         `[PythonManager] Attempting restart (${this.restartAttempts}/${this.maxRestartAttempts})`
       )
-      await new Promise((resolve) =>
-        setTimeout(resolve, 1000 * this.restartAttempts)
-      )
+      await new Promise((resolve) => setTimeout(resolve, 1000 * this.restartAttempts))
       try {
         await this.start()
         // Reset restart attempts on successful start
@@ -218,8 +270,15 @@ export class PythonManager {
 
   /**
    * Stop the Python backend process gracefully.
+   * In development mode with external backend, does nothing.
    */
   stop(): void {
+    // Don't stop external dev backend
+    if (this.isDevMode) {
+      console.log('[PythonManager] Development mode: Not stopping external backend')
+      return
+    }
+
     if (!this.process) return
 
     this.isShuttingDown = true

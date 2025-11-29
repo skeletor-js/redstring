@@ -3,6 +3,16 @@
 Tests POST /api/clusters/analyze, GET /api/clusters/:id,
 GET /api/clusters/:id/cases, and GET /api/clusters/:id/export.
 """
+# Path setup must happen before any backend imports
+import sys
+from pathlib import Path
+
+project_root = Path(__file__).parent.parent.parent.parent
+backend_dir = project_root / "backend"
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+if str(backend_dir) not in sys.path:
+    sys.path.insert(0, str(backend_dir))
 
 import csv
 import io
@@ -587,3 +597,387 @@ class TestClusterPersistence:
             config = json.loads(result["config_json"])
             assert config["min_cluster_size"] == 5
             assert config["weights"]["geographic"] == 40.0
+
+
+class TestClusterAPIEdgeCases:
+    """Test edge cases for cluster API endpoints."""
+
+    def test_analyze_with_empty_filter_results(self, client):
+        """Test clustering with filters that return no cases.
+        
+        When filters match no cases, analysis should return empty results
+        without errors.
+        """
+        payload = {
+            "min_cluster_size": 5,
+            "max_solve_rate": 33.0,
+            "similarity_threshold": 70.0,
+            "filter": {
+                "states": ["NONEXISTENT_STATE_XYZ"],
+                "year_min": 3000,
+                "year_max": 3001,
+            },
+        }
+
+        response = client.post("/api/clusters/analyze", json=payload)
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data["total_clusters"] == 0
+        assert data["total_cases_analyzed"] == 0
+        assert data["clusters"] == []
+
+    def test_analyze_with_very_restrictive_filters(self, client):
+        """Test clustering with very restrictive filter combination."""
+        payload = {
+            "min_cluster_size": 3,
+            "max_solve_rate": 100.0,
+            "similarity_threshold": 50.0,
+            "filter": {
+                "states": ["ILLINOIS"],
+                "year_min": 1990,
+                "year_max": 1990,
+                "solved": 0,
+                "vic_sex": ["Female"],
+                "weapon": ["Strangulation - hanging"],
+            },
+        }
+
+        response = client.post("/api/clusters/analyze", json=payload)
+
+        assert response.status_code == 200
+        data = response.json()
+
+        # Should return valid response even if no clusters found
+        assert "clusters" in data
+        assert "total_clusters" in data
+        assert isinstance(data["clusters"], list)
+
+    def test_get_cluster_with_invalid_id_format(self, client):
+        """Test GET /api/clusters/:id with invalid ID format."""
+        invalid_ids = [
+            "invalid-cluster-id",
+            "12345",
+            "",
+            "!@#$%^&*()",
+            "a" * 1000,  # Very long ID
+        ]
+
+        for invalid_id in invalid_ids:
+            if invalid_id:  # Skip empty string as it would match different route
+                response = client.get(f"/api/clusters/{invalid_id}")
+                assert response.status_code == 404
+
+    def test_get_cluster_cases_with_nonexistent_id(self, client):
+        """Test GET /api/clusters/:id/cases with non-existent cluster ID."""
+        response = client.get("/api/clusters/COMPLETELY_FAKE_CLUSTER_ID_12345/cases")
+
+        assert response.status_code == 404
+        assert "not found" in response.json()["detail"].lower()
+
+    def test_export_cluster_with_nonexistent_id(self, client):
+        """Test GET /api/clusters/:id/export with non-existent cluster ID."""
+        response = client.get("/api/clusters/COMPLETELY_FAKE_CLUSTER_ID_12345/export")
+
+        assert response.status_code == 404
+        assert "not found" in response.json()["detail"].lower()
+
+    def test_analyze_with_min_cluster_size_1(self, client):
+        """Test clustering with minimum cluster size of 1.
+        
+        This is an edge case that might create many small clusters.
+        """
+        payload = {
+            "min_cluster_size": 1,
+            "max_solve_rate": 100.0,
+            "similarity_threshold": 50.0,
+        }
+
+        response = client.post("/api/clusters/analyze", json=payload)
+
+        assert response.status_code == 200
+        data = response.json()
+
+        # Should handle gracefully
+        assert "clusters" in data
+        assert isinstance(data["clusters"], list)
+
+    def test_analyze_with_max_solve_rate_0(self, client):
+        """Test clustering with max_solve_rate of 0%.
+        
+        Only clusters with 0% solve rate (all unsolved) should be returned.
+        """
+        payload = {
+            "min_cluster_size": 3,
+            "max_solve_rate": 0.0,
+            "similarity_threshold": 50.0,
+        }
+
+        response = client.post("/api/clusters/analyze", json=payload)
+
+        assert response.status_code == 200
+        data = response.json()
+
+        # All returned clusters should have 0% solve rate
+        for cluster in data["clusters"]:
+            assert cluster["solve_rate"] == 0.0
+
+    def test_analyze_with_max_solve_rate_100(self, client):
+        """Test clustering with max_solve_rate of 100%.
+        
+        All clusters regardless of solve rate should be included.
+        """
+        payload = {
+            "min_cluster_size": 3,
+            "max_solve_rate": 100.0,
+            "similarity_threshold": 50.0,
+        }
+
+        response = client.post("/api/clusters/analyze", json=payload)
+
+        assert response.status_code == 200
+        data = response.json()
+
+        # All clusters should have solve_rate <= 100
+        for cluster in data["clusters"]:
+            assert cluster["solve_rate"] <= 100.0
+
+    def test_analyze_with_similarity_threshold_100(self, client):
+        """Test clustering with similarity_threshold of 100%.
+        
+        Only exact matches should cluster together.
+        """
+        payload = {
+            "min_cluster_size": 2,
+            "max_solve_rate": 100.0,
+            "similarity_threshold": 100.0,
+        }
+
+        response = client.post("/api/clusters/analyze", json=payload)
+
+        assert response.status_code == 200
+        data = response.json()
+
+        # Should return valid response (likely empty or very few clusters)
+        assert "clusters" in data
+        assert isinstance(data["clusters"], list)
+
+    def test_analyze_with_similarity_threshold_0(self, client):
+        """Test clustering with similarity_threshold of 0%.
+        
+        All cases in same county should cluster together.
+        """
+        payload = {
+            "min_cluster_size": 3,
+            "max_solve_rate": 100.0,
+            "similarity_threshold": 0.0,
+        }
+
+        response = client.post("/api/clusters/analyze", json=payload)
+
+        assert response.status_code == 200
+        data = response.json()
+
+        # Should return valid response with potentially large clusters
+        assert "clusters" in data
+        assert isinstance(data["clusters"], list)
+
+    def test_analyze_returns_clusters_sorted_by_unsolved_descending(self, client):
+        """Test that clusters are returned sorted by unsolved count descending."""
+        payload = {
+            "min_cluster_size": 3,
+            "max_solve_rate": 100.0,
+            "similarity_threshold": 50.0,
+        }
+
+        response = client.post("/api/clusters/analyze", json=payload)
+
+        assert response.status_code == 200
+        data = response.json()
+
+        if len(data["clusters"]) > 1:
+            unsolved_counts = [c["unsolved_cases"] for c in data["clusters"]]
+            # Verify descending order
+            for i in range(len(unsolved_counts) - 1):
+                assert unsolved_counts[i] >= unsolved_counts[i + 1], \
+                    f"Clusters not sorted: {unsolved_counts[i]} < {unsolved_counts[i + 1]}"
+
+    def test_analyze_with_all_weight_types(self, client):
+        """Test clustering with all weight types specified."""
+        payload = {
+            "min_cluster_size": 3,
+            "max_solve_rate": 50.0,
+            "similarity_threshold": 60.0,
+            "weights": {
+                "geographic": 20.0,
+                "weapon": 20.0,
+                "victim_sex": 20.0,
+                "victim_age": 20.0,
+                "temporal": 10.0,
+                "victim_race": 10.0,
+            },
+        }
+
+        response = client.post("/api/clusters/analyze", json=payload)
+
+        assert response.status_code == 200
+        data = response.json()
+
+        # Verify weights were applied
+        assert data["config"]["weights"]["geographic"] == 20.0
+        assert data["config"]["weights"]["weapon"] == 20.0
+        assert data["config"]["weights"]["victim_sex"] == 20.0
+        assert data["config"]["weights"]["victim_age"] == 20.0
+        assert data["config"]["weights"]["temporal"] == 10.0
+        assert data["config"]["weights"]["victim_race"] == 10.0
+
+    def test_cluster_retrieval_after_analysis(self, client):
+        """Test that clusters can be retrieved after analysis.
+        
+        Verifies cluster persistence and retrieval workflow.
+        """
+        # First, run analysis
+        analyze_payload = {
+            "min_cluster_size": 3,
+            "max_solve_rate": 50.0,
+            "similarity_threshold": 60.0,
+        }
+
+        analyze_response = client.post("/api/clusters/analyze", json=analyze_payload)
+        assert analyze_response.status_code == 200
+        analyze_data = analyze_response.json()
+
+        if len(analyze_data["clusters"]) > 0:
+            cluster_id = analyze_data["clusters"][0]["cluster_id"]
+
+            # Then, retrieve the cluster
+            get_response = client.get(f"/api/clusters/{cluster_id}")
+            assert get_response.status_code == 200
+            get_data = get_response.json()
+
+            # Verify cluster data matches
+            assert get_data["cluster_id"] == cluster_id
+            assert get_data["total_cases"] == analyze_data["clusters"][0]["total_cases"]
+
+    def test_cluster_cases_retrieval_after_analysis(self, client):
+        """Test that cluster cases can be retrieved after analysis."""
+        # First, run analysis
+        analyze_payload = {
+            "min_cluster_size": 3,
+            "max_solve_rate": 50.0,
+            "similarity_threshold": 60.0,
+        }
+
+        analyze_response = client.post("/api/clusters/analyze", json=analyze_payload)
+        assert analyze_response.status_code == 200
+        analyze_data = analyze_response.json()
+
+        if len(analyze_data["clusters"]) > 0:
+            cluster_id = analyze_data["clusters"][0]["cluster_id"]
+            expected_case_count = analyze_data["clusters"][0]["total_cases"]
+
+            # Then, retrieve the cluster cases
+            cases_response = client.get(f"/api/clusters/{cluster_id}/cases")
+            assert cases_response.status_code == 200
+            cases_data = cases_response.json()
+
+            # Verify case count matches
+            assert len(cases_data) == expected_case_count
+
+    def test_cluster_export_after_analysis(self, client):
+        """Test that cluster can be exported after analysis."""
+        # First, run analysis
+        analyze_payload = {
+            "min_cluster_size": 3,
+            "max_solve_rate": 50.0,
+            "similarity_threshold": 60.0,
+        }
+
+        analyze_response = client.post("/api/clusters/analyze", json=analyze_payload)
+        assert analyze_response.status_code == 200
+        analyze_data = analyze_response.json()
+
+        if len(analyze_data["clusters"]) > 0:
+            cluster_id = analyze_data["clusters"][0]["cluster_id"]
+            expected_case_count = analyze_data["clusters"][0]["total_cases"]
+
+            # Then, export the cluster
+            export_response = client.get(f"/api/clusters/{cluster_id}/export")
+            assert export_response.status_code == 200
+            assert "text/csv" in export_response.headers["content-type"]
+
+            # Count rows in CSV (excluding header)
+            csv_content = export_response.text
+            csv_reader = csv.DictReader(io.StringIO(csv_content))
+            rows = list(csv_reader)
+
+            assert len(rows) == expected_case_count
+
+    def test_analyze_with_invalid_weight_values(self, client):
+        """Test clustering with invalid weight values (negative)."""
+        payload = {
+            "min_cluster_size": 3,
+            "max_solve_rate": 50.0,
+            "similarity_threshold": 60.0,
+            "weights": {
+                "geographic": -10.0,  # Invalid negative weight
+                "weapon": 25.0,
+                "victim_sex": 20.0,
+                "victim_age": 10.0,
+                "temporal": 7.0,
+                "victim_race": 3.0,
+            },
+        }
+
+        response = client.post("/api/clusters/analyze", json=payload)
+
+        # Should either reject with 422 or handle gracefully
+        # The exact behavior depends on validation implementation
+        assert response.status_code in [200, 422, 400]
+
+    def test_analyze_with_missing_required_fields(self, client):
+        """Test clustering with missing required configuration fields."""
+        # Missing min_cluster_size
+        payload = {
+            "max_solve_rate": 50.0,
+            "similarity_threshold": 60.0,
+        }
+
+        response = client.post("/api/clusters/analyze", json=payload)
+
+        # Should either use defaults or return validation error
+        assert response.status_code in [200, 422]
+
+    def test_analyze_with_empty_payload(self, client):
+        """Test clustering with empty payload."""
+        response = client.post("/api/clusters/analyze", json={})
+
+        # Should either use defaults or return validation error
+        assert response.status_code in [200, 422]
+
+    def test_multiple_analyses_create_separate_clusters(self, client, populated_test_db):
+        """Test that multiple analyses create separate cluster records."""
+        payload = {
+            "min_cluster_size": 3,
+            "max_solve_rate": 50.0,
+            "similarity_threshold": 60.0,
+        }
+
+        # Run first analysis
+        response1 = client.post("/api/clusters/analyze", json=payload)
+        assert response1.status_code == 200
+        data1 = response1.json()
+
+        # Run second analysis
+        response2 = client.post("/api/clusters/analyze", json=payload)
+        assert response2.status_code == 200
+        data2 = response2.json()
+
+        # Cluster IDs should be different (timestamp-based)
+        if len(data1["clusters"]) > 0 and len(data2["clusters"]) > 0:
+            cluster_ids_1 = {c["cluster_id"] for c in data1["clusters"]}
+            cluster_ids_2 = {c["cluster_id"] for c in data2["clusters"]}
+            
+            # IDs should be different due to timestamp
+            assert cluster_ids_1 != cluster_ids_2

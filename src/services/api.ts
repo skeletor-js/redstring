@@ -42,7 +42,7 @@ apiClient.interceptors.request.use(
       console.error('Failed to get API URL:', error)
       logError(error, { context: 'get-api-url' })
       // Fallback to localhost in development
-      config.baseURL = 'http://localhost:5000'
+      config.baseURL = 'http://localhost:5001'
     }
     return config
   },

@@ -196,6 +196,7 @@ def run_cluster_analysis(request: ClusterAnalysisRequest) -> ClusterAnalysisResp
         sqlite3.OperationalError: If database operations fail
     """
     start_time = time.time()
+    logger.info(f"[TIMING] Starting cluster analysis at {start_time}")
 
     # Parse filter if provided
     case_filter = None
@@ -203,7 +204,10 @@ def run_cluster_analysis(request: ClusterAnalysisRequest) -> ClusterAnalysisResp
         case_filter = CaseFilter(**request.filter)
 
     # Fetch cases
+    fetch_start = time.time()
     cases = fetch_cases_for_clustering(case_filter)
+    fetch_time = time.time() - fetch_start
+    logger.info(f"[TIMING] Case fetch completed in {fetch_time:.2f}s - retrieved {len(cases)} cases")
 
     if len(cases) == 0:
         logger.warning("No cases found matching filter criteria")
@@ -235,11 +239,17 @@ def run_cluster_analysis(request: ClusterAnalysisRequest) -> ClusterAnalysisResp
     )
 
     # Run clustering algorithm
-    logger.info(f"Running cluster analysis on {len(cases)} cases")
+    cluster_start = time.time()
+    logger.info(f"[TIMING] Starting clustering algorithm on {len(cases)} cases")
     clusters = detect_clusters(cases, config)
+    cluster_time = time.time() - cluster_start
+    logger.info(f"[TIMING] Clustering algorithm completed in {cluster_time:.2f}s - found {len(clusters)} clusters")
 
     # Persist results to database
+    persist_start = time.time()
     persist_cluster_results(clusters, config)
+    persist_time = time.time() - persist_start
+    logger.info(f"[TIMING] Result persistence completed in {persist_time:.2f}s")
 
     # Build response
     cluster_summaries = [

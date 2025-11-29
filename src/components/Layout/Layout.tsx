@@ -1,46 +1,28 @@
-import { useUIStore } from '../../stores/useUIStore';
-import { Header } from './Header';
-import { Sidebar } from './Sidebar';
-import { FilterView, CaseDetail } from '../cases';
-import { ClusterView } from '../clusters';
-import '../../styles/layout.css';
+import { useUIStore } from '../../stores/useUIStore'
+import { Header } from './Header'
+import { Sidebar } from './Sidebar'
+import { FilterView, CaseDetail } from '../cases'
+import { ClusterView } from '../clusters'
+import { MapView } from '../map'
+import { TimelineView } from '../timeline'
+import { StatisticsView } from '../statistics'
+import '../../styles/layout.css'
 
 export function Layout() {
-  const { activeTab, sidebarCollapsed } = useUIStore();
+  const { activeTab, sidebarCollapsed } = useUIStore()
 
   const renderContent = () => {
     switch (activeTab) {
       case 'filters':
-        return <FilterView />;
+        return <FilterView />
       case 'clusters':
-        return <ClusterView />;
+        return <ClusterView />
       case 'map':
-        return (
-          <div className="tab-content">
-            <div className="placeholder-view">
-              <h2>Map View</h2>
-              <p>Coming in Phase 6 - Map Visualization</p>
-            </div>
-          </div>
-        );
+        return <MapView />
       case 'timeline':
-        return (
-          <div className="tab-content">
-            <div className="placeholder-view">
-              <h2>Timeline View</h2>
-              <p>Coming in Phase 7 - Timeline Visualization</p>
-            </div>
-          </div>
-        );
+        return <TimelineView />
       case 'stats':
-        return (
-          <div className="tab-content">
-            <div className="placeholder-view">
-              <h2>Statistics View</h2>
-              <p>Coming in Phase 8 - Statistical Analysis</p>
-            </div>
-          </div>
-        );
+        return <StatisticsView />
       default:
         return (
           <div className="tab-content">
@@ -48,9 +30,9 @@ export function Layout() {
               <h2>Unknown View</h2>
             </div>
           </div>
-        );
+        )
     }
-  };
+  }
 
   return (
     <div className="layout">
@@ -61,5 +43,5 @@ export function Layout() {
       </div>
       <CaseDetail />
     </div>
-  );
+  )
 }

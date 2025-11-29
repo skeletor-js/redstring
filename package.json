@@ -2,18 +2,19 @@
   "name": "redstring",
   "version": "0.1.0",
   "description": "Murder Accountability Project Case Analyzer - Desktop application for analyzing homicide data",
-  "main": "dist/electron/main.js",
+  "main": "dist-electron/main.js",
   "author": "Jordan Stella",
   "license": "MIT",
   "private": true,
   "scripts": {
     "dev": "concurrently -n \"BACKEND,ELECTRON\" -c \"bgBlue.bold,bgMagenta.bold\" \"npm run dev:backend\" \"npm run dev:electron\"",
+    "dev:browser": "concurrently -n \"BACKEND,VITE\" -c \"bgBlue.bold,bgGreen.bold\" \"npm run dev:backend\" \"vite --mode browser\"",
     "dev:backend": "cd backend && python3 -m uvicorn main:app --reload --port 5000",
     "dev:electron": "vite",
-    "build": "tsc && vite build && electron-builder",
+    "build": "npm run build:electron && npm run build:frontend && npm run build:backend",
     "build:frontend": "tsc && vite build",
     "build:electron": "tsc -p electron/tsconfig.json",
-    "build:backend": "cd backend && pyinstaller build.spec",
+    "build:backend": "cd backend && ./venv/bin/pyinstaller build.spec",
     "package": "npm run build && electron-builder build --publish never",
     "package:mac": "npm run build && electron-builder build --mac --publish never",
     "package:win": "npm run build && electron-builder build --win --publish never",
@@ -31,10 +32,13 @@
     "@tanstack/react-query": "^5.17.0",
     "@tanstack/react-table": "^8.11.0",
     "@tanstack/react-virtual": "^3.0.1",
+    "@types/leaflet": "^1.9.21",
     "axios": "^1.6.5",
+    "leaflet": "^1.9.4",
     "maplibre-gl": "^3.6.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-leaflet": "^4.2.1",
     "recharts": "^2.10.3",
     "zustand": "^4.4.7"
   },
@@ -102,6 +106,10 @@
         "filter": [
           "**/*"
         ]
+      },
+      {
+        "from": "backend/dist/backend",
+        "to": "backend/backend"
       }
     ]
   },

@@ -17,8 +17,8 @@ class Settings(BaseSettings):
     api_title: str = "Redstring API"
     api_version: str = "0.1.0"
     host: str = "127.0.0.1"
-    port: int = 5000
-    port_range_start: int = 5000
+    port: int = 5001
+    port_range_start: int = 5001
     port_range_end: int = 5099
     log_level: str = "INFO"
 

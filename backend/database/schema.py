@@ -23,7 +23,8 @@ CREATE TABLE IF NOT EXISTS metadata (
 
 CREATE_CASES_TABLE = """
 CREATE TABLE IF NOT EXISTS cases (
-    id TEXT PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    case_id TEXT,
     cntyfips TEXT,
     county_fips_code INTEGER,
     ori TEXT,
@@ -76,7 +77,7 @@ CREATE TABLE IF NOT EXISTS collections (
 CREATE_COLLECTION_CASES_TABLE = """
 CREATE TABLE IF NOT EXISTS collection_cases (
     collection_id INTEGER,
-    case_id TEXT,
+    case_id INTEGER,
     added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (collection_id, case_id),
     FOREIGN KEY (collection_id) REFERENCES collections(id) ON DELETE CASCADE,
@@ -87,7 +88,7 @@ CREATE TABLE IF NOT EXISTS collection_cases (
 CREATE_CASE_NOTES_TABLE = """
 CREATE TABLE IF NOT EXISTS case_notes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    case_id TEXT NOT NULL,
+    case_id INTEGER NOT NULL,
     note TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (case_id) REFERENCES cases(id)
@@ -127,7 +128,7 @@ CREATE TABLE IF NOT EXISTS cluster_results (
 CREATE_CLUSTER_MEMBERSHIP_TABLE = """
 CREATE TABLE IF NOT EXISTS cluster_membership (
     cluster_id TEXT NOT NULL,
-    case_id TEXT NOT NULL,
+    case_id INTEGER NOT NULL,
     similarity_score REAL,
     PRIMARY KEY (cluster_id, case_id),
     FOREIGN KEY (cluster_id) REFERENCES cluster_results(cluster_id) ON DELETE CASCADE,
@@ -160,6 +161,7 @@ CREATE TABLE IF NOT EXISTS saved_analysis_clusters (
 # =============================================================================
 
 INDEX_STATEMENTS = [
+    "CREATE INDEX IF NOT EXISTS idx_case_id ON cases(case_id);",
     "CREATE INDEX IF NOT EXISTS idx_state ON cases(state);",
     "CREATE INDEX IF NOT EXISTS idx_year ON cases(year);",
     "CREATE INDEX IF NOT EXISTS idx_solved ON cases(solved);",

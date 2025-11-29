@@ -39,10 +39,14 @@ def build_filter_query(filters: CaseFilter) -> Tuple[str, List[Any]]:
     params: List[Any] = []
 
     # State filter (indexed)
+    # Note: Database stores states in Title Case (e.g., "California")
+    # Frontend sends UPPERCASE (e.g., "CALIFORNIA")
+    # We use UPPER() for case-insensitive matching
     if filters.states:
-        placeholders = ",".join("?" * len(filters.states))
-        conditions.append(f"state IN ({placeholders})")
-        params.extend(filters.states)
+        upper_states = [s.upper() for s in filters.states]
+        placeholders = ",".join("?" * len(upper_states))
+        conditions.append(f"UPPER(state) IN ({placeholders})")
+        params.extend(upper_states)
 
     # Year range filter (indexed)
     if filters.year_min is not None:
@@ -284,6 +288,22 @@ def get_case_by_id(case_id: str) -> Optional[Dict[str, Any]]:
     except Exception as e:
         logger.error(f"Error fetching case {case_id}: {e}", exc_info=True)
         raise
+
+
+def get_unique_state_values() -> List[str]:
+    """Get all unique state values from the database.
+    
+    Returns:
+        List of unique state values as they appear in the database
+    """
+    query = "SELECT DISTINCT state FROM cases ORDER BY state LIMIT 100"
+    
+    with get_db_connection() as conn:
+        cursor = conn.execute(query)
+        rows = cursor.fetchall()
+        states = [row["state"] for row in rows if row["state"]]
+        
+    return states
 
 
 def get_filter_stats(filters: CaseFilter) -> Dict[str, Any]:

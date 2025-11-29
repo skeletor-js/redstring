@@ -8,11 +8,11 @@ interface TabConfig {
 }
 
 const tabs: TabConfig[] = [
-  { id: 'filters', label: 'Filters', icon: '🔍' },
-  { id: 'clusters', label: 'Clusters', icon: '🎯' },
+  { id: 'filters', label: 'Cases', icon: '📊' },
   { id: 'map', label: 'Map', icon: '🗺️' },
   { id: 'timeline', label: 'Timeline', icon: '📅' },
-  { id: 'stats', label: 'Statistics', icon: '📊' },
+  { id: 'stats', label: 'Statistics', icon: '📈' },
+  { id: 'clusters', label: 'Clusters', icon: '🔗' },
 ]
 
 export function Header() {

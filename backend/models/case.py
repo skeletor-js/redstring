@@ -14,8 +14,76 @@ from pydantic import BaseModel, Field
 # =============================================================================
 
 
+class CaseQueryRequest(BaseModel):
+    """Request model for POST /api/cases/query endpoint.
+
+    Matches the frontend CaseFilterRequest interface for JSON body requests.
+    This is the preferred format for complex filter queries.
+
+    Example:
+        {
+            "states": ["ILLINOIS", "INDIANA"],
+            "year_range": [1990, 2020],
+            "solved": "unsolved",
+            "vic_sex": ["Female"],
+            "weapon": ["Strangulation - hanging"],
+            "limit": 100
+        }
+    """
+
+    # Primary filters
+    states: Optional[List[str]] = Field(
+        None, description="State names (e.g., ['ILLINOIS', 'CALIFORNIA'])"
+    )
+    year_range: Optional[List[int]] = Field(
+        None, description="Year range [min, max] (e.g., [1990, 2020])"
+    )
+    solved: Optional[str] = Field(
+        None, description="Solved status: 'all', 'solved', or 'unsolved'"
+    )
+
+    # Victim demographics
+    vic_sex: Optional[List[str]] = Field(
+        None, description="Victim sex: 'Male', 'Female', 'Unknown'"
+    )
+    vic_age_range: Optional[List[int]] = Field(
+        None, description="Victim age range [min, max] (e.g., [18, 65])"
+    )
+    include_unknown_age: Optional[bool] = Field(
+        None, description="Include cases where age is unknown (999)"
+    )
+    vic_race: Optional[List[str]] = Field(
+        None, description="Victim race values"
+    )
+    vic_ethnic: Optional[List[str]] = Field(
+        None, description="Victim ethnicity values"
+    )
+
+    # Crime characteristics
+    weapon: Optional[List[str]] = Field(
+        None, description="Weapon types (18 categories)"
+    )
+    relationship: Optional[List[str]] = Field(
+        None, description="Victim-offender relationship (28 categories)"
+    )
+    circumstance: Optional[List[str]] = Field(
+        None, description="Circumstance/motive categories"
+    )
+
+    # Pagination
+    cursor: Optional[str] = Field(
+        None, description="Pagination cursor (format: 'year:id')"
+    )
+    limit: Optional[int] = Field(
+        100,
+        ge=1,
+        le=10000,
+        description="Number of results per page (max 10000)",
+    )
+
+
 class CaseFilter(BaseModel):
-    """Request model for filtering cases.
+    """Request model for filtering cases (used by GET endpoints).
 
     Supports comprehensive filtering across all case dimensions including
     demographics, crime characteristics, geographic location, and temporal range.
@@ -124,54 +192,55 @@ class CaseResponse(BaseModel):
     """
 
     # Core identification
-    id: str
-    cntyfips: str
+    id: int  # Auto-increment primary key
+    case_id: Optional[str]  # Original case ID from CSV (may have duplicates)
+    cntyfips: Optional[str]
     county_fips_code: Optional[int]
-    ori: str
-    state: str
-    agency: str
-    agentype: str
-    source: str
+    ori: Optional[str]
+    state: Optional[str]
+    agency: Optional[str]
+    agentype: Optional[str]
+    source: Optional[str]
 
     # Case status and details
-    solved: int
-    year: int
-    month: int
-    month_name: str
-    incident: int
-    action_type: str
-    homicide: str
-    situation: str
+    solved: Optional[int]
+    year: Optional[int]
+    month: Optional[int]
+    month_name: Optional[str]
+    incident: Optional[int]
+    action_type: Optional[str]
+    homicide: Optional[str]
+    situation: Optional[str]
 
     # Victim demographics
-    vic_age: int
-    vic_sex: str
-    vic_sex_code: int
-    vic_race: str
-    vic_ethnic: str
+    vic_age: Optional[int]
+    vic_sex: Optional[str]
+    vic_sex_code: Optional[int]
+    vic_race: Optional[str]
+    vic_ethnic: Optional[str]
 
     # Offender demographics
-    off_age: int
-    off_sex: str
-    off_race: str
-    off_ethnic: str
+    off_age: Optional[int]
+    off_sex: Optional[str]
+    off_race: Optional[str]
+    off_ethnic: Optional[str]
 
     # Crime characteristics
-    weapon: str
-    weapon_code: int
-    relationship: str
-    circumstance: str
-    subcircum: str
+    weapon: Optional[str]
+    weapon_code: Optional[int]
+    relationship: Optional[str]
+    circumstance: Optional[str]
+    subcircum: Optional[str]
 
     # Counts
-    vic_count: int
-    off_count: int
+    vic_count: Optional[int]
+    off_count: Optional[int]
 
     # Additional metadata
-    file_date: str
-    msa: str
+    file_date: Optional[str]
+    msa: Optional[str]
     msa_fips_code: Optional[int]
-    decade: int
+    decade: Optional[int]
 
     # Geographic data
     latitude: Optional[float]

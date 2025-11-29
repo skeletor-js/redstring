@@ -128,7 +128,7 @@ export const CaseTable: React.FC = () => {
                       height: `${virtualRow.size}px`,
                       transform: `translateY(${virtualRow.start}px)`,
                     }}
-                    onClick={() => selectCase(caseItem.id)}
+                    onClick={() => selectCase(String(caseItem.id))}
                   >
                     <td className="case-table-cell case-id">{caseItem.id}</td>
                     <td className="case-table-cell">{caseItem.year}</td>

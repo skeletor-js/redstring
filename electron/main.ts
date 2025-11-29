@@ -50,13 +50,10 @@ function createWindow(): void {
 
   // Security: block external navigation
   mainWindow.webContents.on('will-navigate', (event, url) => {
-    const allowedOrigins = ['http://localhost:3000', 'http://localhost:5000']
+    const allowedOrigins = ['http://localhost:3000', 'http://localhost:5001']
     try {
       const urlObj = new URL(url)
-      if (
-        !allowedOrigins.includes(urlObj.origin) &&
-        !url.startsWith('file://')
-      ) {
+      if (!allowedOrigins.includes(urlObj.origin) && !url.startsWith('file://')) {
         event.preventDefault()
         console.warn(`[Security] Blocked navigation to: ${url}`)
       }
@@ -84,8 +81,7 @@ async function startPythonBackend(): Promise<void> {
     mainWindow?.webContents.send('backend-ready')
     console.log('[Main] Python backend ready, renderer notified')
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error'
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     console.error('[Main] Failed to start Python backend:', errorMessage)
     mainWindow?.webContents.send('backend-error', errorMessage)
   }

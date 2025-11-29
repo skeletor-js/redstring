@@ -18,5 +18,9 @@ if (window.electronAPI) {
     console.log(`Redstring v${version}`)
   })
 } else {
-  console.warn('Electron API not available - running in browser?')
+  console.log(
+    '%c🌐 Browser Mode',
+    'background: #3b82f6; color: white; padding: 2px 8px; border-radius: 4px;',
+    '- Running without Electron. Using fallback API at http://localhost:5000'
+  )
 }

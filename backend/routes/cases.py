@@ -17,6 +17,7 @@ from database.queries.cases import (
 from models.case import (
     CaseFilter,
     CaseListResponse,
+    CaseQueryRequest,
     CaseResponse,
     PaginationInfo,
     StatsSummary,
@@ -184,6 +185,205 @@ async def list_cases(
         logger.error(f"Error fetching cases: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail="Failed to fetch cases. Please try again."
+        )
+
+
+@router.post("/cases/query", response_model=CaseListResponse)
+async def query_cases(request: CaseQueryRequest):
+    """Query cases with JSON body filters (POST endpoint).
+
+    This endpoint accepts a JSON body with filter criteria, which is more
+    suitable for complex filter combinations than query parameters.
+
+    Request body:
+        - states: List of state names (uppercase)
+        - year_range: [min_year, max_year] tuple
+        - solved: 'all', 'solved', or 'unsolved'
+        - vic_sex: List of victim sex values
+        - vic_age_range: [min_age, max_age] tuple
+        - include_unknown_age: Include cases with unknown age (999)
+        - vic_race: List of victim race values
+        - vic_ethnic: List of victim ethnicity values
+        - weapon: List of weapon types
+        - relationship: List of relationship values
+        - circumstance: List of circumstance values
+        - cursor: Pagination cursor
+        - limit: Results per page (default: 100, max: 10000)
+
+    Returns:
+        CaseListResponse with paginated cases and pagination metadata
+
+    Raises:
+        HTTPException: 400 for invalid parameters, 500 for query errors
+
+    Example:
+        POST /api/cases/query
+        {
+            "states": ["ILLINOIS"],
+            "year_range": [1990, 2020],
+            "solved": "unsolved",
+            "limit": 100
+        }
+    """
+    try:
+        # Convert POST request body to CaseFilter for query execution
+        # Map year_range to year_min/year_max
+        year_min = None
+        year_max = None
+        if request.year_range and len(request.year_range) == 2:
+            year_min = request.year_range[0]
+            year_max = request.year_range[1]
+
+        # Map vic_age_range to vic_age_min/vic_age_max
+        vic_age_min = None
+        vic_age_max = None
+        if request.vic_age_range and len(request.vic_age_range) == 2:
+            vic_age_min = request.vic_age_range[0]
+            vic_age_max = request.vic_age_range[1]
+
+        # Map solved string to integer
+        solved = None
+        if request.solved == "solved":
+            solved = 1
+        elif request.solved == "unsolved":
+            solved = 0
+        # 'all' or None means no filter
+
+        # Build filter object
+        filters = CaseFilter(
+            states=request.states,
+            vic_sex=request.vic_sex,
+            vic_race=request.vic_race,
+            vic_ethnic=request.vic_ethnic,
+            vic_age_min=vic_age_min,
+            vic_age_max=vic_age_max,
+            include_unknown_age=request.include_unknown_age or False,
+            year_min=year_min,
+            year_max=year_max,
+            solved=solved,
+            weapon=request.weapon,
+            relationship=request.relationship,
+            circumstance=request.circumstance,
+            cursor=request.cursor,
+            limit=request.limit or 100,
+        )
+
+        logger.info(f"POST /cases/query with filters: {filters.model_dump()}")
+
+        # Execute query
+        cases, next_cursor, total_count = get_cases_paginated(filters)
+
+        # Convert to response models
+        case_responses = [CaseResponse(**case) for case in cases]
+
+        # Build pagination info
+        pagination = PaginationInfo(
+            next_cursor=next_cursor,
+            has_more=next_cursor is not None,
+            current_page_size=len(case_responses),
+            total_count=total_count,
+            large_result_warning=total_count > 50000,
+        )
+
+        logger.info(
+            f"Returning {len(case_responses)} cases "
+            f"(total: {total_count}, has_more: {pagination.has_more})"
+        )
+
+        return CaseListResponse(cases=case_responses, pagination=pagination)
+
+    except ValueError as e:
+        logger.error(f"Invalid filter parameters: {e}", exc_info=True)
+        raise HTTPException(status_code=400, detail=f"Invalid parameters: {str(e)}")
+
+    except Exception as e:
+        logger.error(f"Error querying cases: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail="Failed to query cases. Please try again."
+        )
+
+
+@router.post("/cases/stats", response_model=StatsSummary)
+async def get_stats_post(request: CaseQueryRequest):
+    """Get statistics with JSON body filters (POST endpoint).
+
+    This endpoint accepts a JSON body with filter criteria for calculating
+    aggregate statistics.
+
+    Request body: Same as POST /api/cases/query (excluding pagination)
+
+    Returns:
+        StatsSummary with counts and solve rate
+
+    Raises:
+        HTTPException: 400 for invalid parameters, 500 for query errors
+
+    Example:
+        POST /api/cases/stats
+        {
+            "states": ["ILLINOIS"],
+            "year_range": [1990, 2020],
+            "solved": "unsolved"
+        }
+    """
+    try:
+        # Convert POST request body to CaseFilter for query execution
+        # Map year_range to year_min/year_max
+        year_min = None
+        year_max = None
+        if request.year_range and len(request.year_range) == 2:
+            year_min = request.year_range[0]
+            year_max = request.year_range[1]
+
+        # Map vic_age_range to vic_age_min/vic_age_max
+        vic_age_min = None
+        vic_age_max = None
+        if request.vic_age_range and len(request.vic_age_range) == 2:
+            vic_age_min = request.vic_age_range[0]
+            vic_age_max = request.vic_age_range[1]
+
+        # Map solved string to integer
+        solved = None
+        if request.solved == "solved":
+            solved = 1
+        elif request.solved == "unsolved":
+            solved = 0
+        # 'all' or None means no filter
+
+        # Build filter object (no pagination for stats)
+        filters = CaseFilter(
+            states=request.states,
+            vic_sex=request.vic_sex,
+            vic_race=request.vic_race,
+            vic_ethnic=request.vic_ethnic,
+            vic_age_min=vic_age_min,
+            vic_age_max=vic_age_max,
+            include_unknown_age=request.include_unknown_age or False,
+            year_min=year_min,
+            year_max=year_max,
+            solved=solved,
+            weapon=request.weapon,
+            relationship=request.relationship,
+            circumstance=request.circumstance,
+        )
+
+        logger.info(f"POST /cases/stats with filters: {filters.model_dump()}")
+
+        # Get statistics
+        stats = get_filter_stats(filters)
+
+        logger.info(f"Statistics: {stats}")
+
+        return StatsSummary(**stats)
+
+    except ValueError as e:
+        logger.error(f"Invalid filter parameters: {e}", exc_info=True)
+        raise HTTPException(status_code=400, detail=f"Invalid parameters: {str(e)}")
+
+    except Exception as e:
+        logger.error(f"Error calculating statistics: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail="Failed to calculate statistics. Please try again."
         )
 
 

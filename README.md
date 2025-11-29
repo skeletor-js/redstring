@@ -1,6 +1,6 @@
 # Redstring - Murder Accountability Project Case Analyzer
 
-**Status:** Production Ready (MVP Phase 1 Complete) 🎉
+**Status:** MVP Phase 1 Complete ✅ | Phase 2 Features In Progress 🚧
 **Version:** 0.1.0
 **License:** MIT
 
@@ -10,7 +10,7 @@ A desktop application for analyzing homicide data from the Murder Accountability
 
 This Electron + React + Python application enables researchers, journalists, and analysts to explore and analyze **894,636 homicide records** spanning 1976-2023, identifying suspicious clusters of unsolved murders that may indicate serial killer activity.
 
-**MVP Phase 1 is complete** with production-ready code, comprehensive test coverage (90%+ backend, 88% frontend), error handling, and complete documentation.
+**MVP Phase 1 is complete** with production-ready code, comprehensive test coverage (90%+ backend, 88% frontend), error handling, and complete documentation. **Phase 2 features** (Map, Timeline, Statistics) are currently in development.
 
 ## Tech Stack
 
@@ -21,13 +21,13 @@ This Electron + React + Python application enables researchers, journalists, and
 - TanStack Query - Server state & caching
 - TanStack Table - Data tables with virtualization
 - Vite - Build tool
-- MapLibre GL JS - Map visualization
+- Leaflet + React-Leaflet - Map visualization (Phase 2)
 - Recharts - Statistical charts
 
 **Backend:**
 - Python 3.11 + FastAPI - REST API
-- Pandas + NumPy - Data processing
-- scikit-learn - Clustering algorithms
+- Pandas 2.1 + NumPy 1.26 - Data processing
+- scikit-learn 1.3 - Clustering algorithms
 - SQLite - Local database
 - Uvicorn - ASGI server
 
@@ -179,9 +179,11 @@ All data files are stored in `resources/data/` and tracked via Git LFS:
 - **County FIPS Lookout.csv** - County FIPS code mapping
 - **US County Centroids.csv** - Geographic coordinates for counties
 
-## Key Features (MVP Phase 1)
+## Key Features
 
-### Core Functionality
+### MVP Phase 1 (Complete ✅)
+
+#### Core Functionality
 
 ✅ **Data Pipeline**
 - Import 894,636 records into local SQLite database (<60 seconds)
@@ -198,7 +200,7 @@ All data files are stored in `resources/data/` and tracked via Git LFS:
 - Auto-apply with 300ms debounce for performance
 
 ✅ **Custom Clustering Algorithm**
-- County-based geographic clustering (MVP Phase 1)
+- County-based geographic clustering
 - Multi-factor similarity scoring with 6 weighted factors:
   - Geographic proximity (35%)
   - Weapon match (25%)
@@ -208,15 +210,14 @@ All data files are stored in `resources/data/` and tracked via Git LFS:
   - Victim race (3%)
 - Configurable detection thresholds (min cluster size, max solve rate)
 - Connected component detection using DFS
-- Identify suspicious clusters with low solve rates
-- Drill-down to view all cases in a cluster with statistics
+- *Note: Cluster UI currently shows "Coming Soon" placeholder while being refined*
 
 ✅ **Export Capabilities**
 - Export filtered case results to CSV
 - Export cluster analysis results with all case details
 - Proper CSV escaping for all fields
 
-### User Experience
+#### User Experience
 
 ✅ **Forensic Minimalism Design**
 - **Lab Mode (Light)**: Clean, clinical, high-contrast for daylight analysis
@@ -237,7 +238,7 @@ All data files are stored in `resources/data/` and tracked via Git LFS:
 - User-friendly error messages (no technical jargon)
 - Detailed logging to rotating log files
 
-### Developer Experience
+#### Developer Experience
 
 ✅ **Comprehensive Testing**
 - **Backend**: 150+ tests, 90-95% coverage (pytest)
@@ -264,16 +265,56 @@ All data files are stored in `resources/data/` and tracked via Git LFS:
 - **PERFORMANCE_OPTIMIZATION_SUMMARY.md** (4,000 lines): Optimization strategies and benchmarks
 - **IMPLEMENTATION_PLAN.md**: Detailed phase-by-phase implementation roadmap
 
-## Success Criteria ✅ All Met!
+---
 
-**Performance Targets:**
-- ✅ Database setup: < 60 seconds (894,636 records)
-- ✅ Single filter query: < 500ms
-- ✅ Multi-filter query: < 2 seconds
-- ✅ Cluster analysis: < 5 seconds
-- ✅ Table rendering: Smooth 60fps scrolling (50k+ rows)
+### Phase 2 Features (In Progress 🚧)
 
-**Code Quality Targets:**
+See [`docs/MAP_TIMELINE_STATISTICS_PLAN.md`](docs/MAP_TIMELINE_STATISTICS_PLAN.md) for detailed implementation plan.
+
+🚧 **Map Visualization**
+- Interactive geographic visualization using Leaflet + React-Leaflet
+- County aggregation with choropleth layers
+- Case markers with clustering
+- Color coding by solve rate, case count, or other metrics
+- Backend: `/api/map/*` endpoints implemented
+- Frontend: Components in `src/components/map/`
+
+🚧 **Timeline Visualization**
+- Temporal analysis of cases over time using Recharts
+- Year/month/decade aggregation
+- Trend analysis with moving averages
+- Backend: `/api/timeline/*` endpoints implemented
+- Frontend: Components in `src/components/timeline/`
+
+🚧 **Statistics Dashboard**
+- Comprehensive metrics and charts
+- Demographic breakdowns (victim sex, race, age)
+- Weapon distribution analysis
+- Seasonal patterns
+- Geographic distribution
+- Backend: `/api/statistics/*` endpoints implemented
+- Frontend: Components in `src/components/statistics/`
+
+🔧 **Cluster Feature Refinement**
+- Currently showing "Coming Soon" placeholder
+- Algorithm implemented and working
+- UI being refined for better user experience
+
+## Performance Targets
+
+| Operation | Target | Status |
+|-----------|--------|--------|
+| Database setup (894,636 records) | < 60 seconds | ✅ Met |
+| Single filter query | < 500ms | ✅ Met |
+| Multi-filter query (3-5 filters) | < 2 seconds | ✅ Met |
+| Cluster analysis | < 5 seconds | ✅ Met |
+| Table rendering (50k+ rows) | Smooth 60fps | ✅ Met |
+| Map aggregation | < 2 seconds | 🚧 Phase 2 |
+| Timeline aggregation | < 1 second | 🚧 Phase 2 |
+| Statistics dashboard | < 2 seconds | 🚧 Phase 2 |
+
+## Code Quality
+
 - ✅ Frontend test coverage: 88% (target: 80%+)
 - ✅ Backend test coverage: 90-95% (target: 90%+)
 - ✅ TypeScript strict mode enabled
@@ -281,41 +322,19 @@ All data files are stored in `resources/data/` and tracked via Git LFS:
 - ✅ Zero ESLint/TypeScript errors
 - ✅ Pre-commit hooks enforcing quality
 
-**Functional Requirements:**
-- ✅ Application starts and spawns Python backend
-- ✅ First-run database setup with progress tracking
-- ✅ All 14 filter types working correctly
-- ✅ Case table with virtualization and infinite scroll
-- ✅ Cluster analysis with configurable parameters
-- ✅ CSV export for cases and clusters
-- ✅ Dark/light theme toggle (Lab Mode & Evidence Room)
-- ✅ Comprehensive error handling and logging
-- ✅ Complete API and developer documentation
-
 ## Documentation
 
 Comprehensive documentation is available in the `docs/` directory:
 
-- **[CLAUDE.md](CLAUDE.md)** - Quick reference for Claude Code context and project overview
-- **[docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md)** - Detailed phase-by-phase implementation roadmap with task breakdowns
-- **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)** - Complete developer guide covering:
-  - Development environment setup
-  - Project structure and architecture
-  - Development workflow and debugging
-  - Code style standards and testing strategy
-  - Building and packaging
-  - Contributing guidelines
-- **[docs/API.md](docs/API.md)** - Full REST API reference with:
-  - All endpoint documentation (health, setup, cases, clusters)
-  - Request/response formats and examples
-  - Query parameter references
-  - Data model definitions
-  - cURL examples for testing
-- **[docs/PERFORMANCE_OPTIMIZATION_SUMMARY.md](docs/PERFORMANCE_OPTIMIZATION_SUMMARY.md)** - Performance optimization guide with:
-  - Current performance analysis
-  - High-impact optimization recommendations
-  - Implementation strategies
-  - Benchmarking methodologies
+| Document | Description |
+|----------|-------------|
+| [CLAUDE.md](CLAUDE.md) | Quick reference for AI assistants and project overview |
+| [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) | MVP Phase 1 implementation roadmap (complete) |
+| [docs/MAP_TIMELINE_STATISTICS_PLAN.md](docs/MAP_TIMELINE_STATISTICS_PLAN.md) | Phase 2 features implementation plan (current) |
+| [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | Complete developer guide (setup, architecture, testing) |
+| [docs/API.md](docs/API.md) | Full REST API reference with examples |
+| [docs/PERFORMANCE_OPTIMIZATION_SUMMARY.md](docs/PERFORMANCE_OPTIMIZATION_SUMMARY.md) | Performance optimization strategies |
+| [docs/TEST_PLAN.md](docs/TEST_PLAN.md) | Testing strategy and coverage |
 
 ## Project Roadmap
 
@@ -327,11 +346,44 @@ Comprehensive documentation is available in the `docs/` directory:
 - Clustering algorithm
 - Testing, theming, error handling, and documentation
 
+** Phase 2 (IN PROGRESS)**
+- Map visualization with Leaflet
+- Timeline visualization with Recharts
+- Statistics dashboard
+- Cluster feature refinement
+
 **🔮 Future Phases**
-- **Phase 2**: Map visualization, timeline view, radius-based clustering
-- **Phase 3**: Case similarity "Find Similar" feature, advanced search
+- **Phase 3**: Radius-based clustering, case similarity "Find Similar" feature
 - **Phase 4**: Custom weight configuration UI, saved analyses
 - **Phase 5**: Advanced analytics, reporting, and data export options
+
+## API Endpoints
+
+The backend provides the following API endpoint groups:
+
+| Endpoint Group | Description | Status |
+|----------------|-------------|--------|
+| `/health` | Backend health check | ✅ Complete |
+| `/api/setup/*` | Database initialization | ✅ Complete |
+| `/api/cases/*` | Case queries and details | ✅ Complete |
+| `/api/clusters/*` | Cluster analysis | ✅ Complete |
+| `/api/map/*` | Map aggregation data | 🚧 Phase 2 |
+| `/api/timeline/*` | Timeline aggregation | 🚧 Phase 2 |
+| `/api/statistics/*` | Statistics dashboard | 🚧 Phase 2 |
+
+See [docs/API.md](docs/API.md) for complete API documentation.
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Run tests (`npm test`)
+5. Commit with conventional commits (`git commit -m 'feat: add amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
+
+See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for detailed contributing guidelines.
 
 ## License
 
@@ -347,7 +399,10 @@ Data provided by the [Murder Accountability Project](https://www.murderdata.org)
 - Electron 28 + React 18 + TypeScript
 - Python 3.11 + FastAPI + SQLite
 - TanStack Query + Zustand + TanStack Table
+- Leaflet + React-Leaflet (maps)
+- Recharts (charts)
 - IBM Plex Mono typography
 - Forensic Minimalism design aesthetic
 
-**Development powered by:** [Claude Code](https://claude.com/claude-code)
+**Development powered by:** [Claude](https://claude.ai) + [Kilo Code](https://kilocode.ai)
+
