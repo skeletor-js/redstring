@@ -444,6 +444,28 @@
   font-weight: 600 !important;
 }
 
+/* === Heatmap Legend === */
+
+.heatmap-legend {
+  padding: 0;
+}
+
+.heatmap-gradient-bar {
+  height: 15px;
+  background: linear-gradient(to right, #3388ff, #00ff00, #ffff00, #ff8800, #ff0000);
+  border-radius: var(--radius-sm);
+  margin-top: var(--space-xs);
+}
+
+.heatmap-gradient-labels {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--color-text-muted);
+  margin-top: var(--space-xs);
+}
+
 /* === Responsive === */
 
 @media (max-width: 768px) {

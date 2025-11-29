@@ -10,6 +10,7 @@ export { MapLegend, default as MapLegendDefault } from './MapLegend'
 export { CountyLayer, default as CountyLayerDefault } from './CountyLayer'
 export { ChoroplethLayer, default as ChoroplethLayerDefault } from './ChoroplethLayer'
 export { CaseMarkers, default as CaseMarkersDefault } from './CaseMarkers'
+export { HeatmapLayer } from './HeatmapLayer'
 
 // Re-export types for convenience
 export type {
