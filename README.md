@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**Status:** MVP Phase 1 Complete ✅ | Phase 2 Features In Progress 🚧
+**Status:** MVP Complete ✅
 **Version:** 0.1.0
 **License:** MIT
 
@@ -12,7 +12,7 @@ A desktop application for analyzing homicide data from the Murder Accountability
 
 This Electron + React + Python application enables researchers, journalists, and analysts to explore and analyze **894,636 homicide records** spanning 1976-2023, identifying suspicious clusters of unsolved murders that may indicate serial killer activity.
 
-**MVP Phase 1 is complete** with production-ready code, comprehensive test coverage (90%+ backend, 88% frontend), error handling, and complete documentation. **Phase 2 features** (Map, Timeline, Statistics) are currently in development.
+**MVP is complete** with production-ready code, comprehensive test coverage (90%+ backend, 88% frontend), error handling, and complete documentation. **Additional features** (Map, Timeline, Statistics visualizations) are in active development.
 
 ## Tech Stack
 
@@ -44,7 +44,7 @@ redstring/
 │   ├── services/      # API client layer
 │   └── hooks/         # Custom React hooks
 ├── backend/           # Python FastAPI backend
-│   ├── analysis/      # Clustering algorithms
+│   ├── analysis/      # Clustering & similarity algorithms
 │   ├── database/      # SQLite schema & queries
 │   ├── routes/        # API endpoints
 │   └── services/      # Business logic
@@ -183,7 +183,7 @@ All data files are stored in `resources/data/` and tracked via Git LFS:
 
 ## Key Features
 
-### MVP Phase 1 (Complete ✅)
+### Core Features (Complete ✅)
 
 #### Core Functionality
 
@@ -210,9 +210,23 @@ All data files are stored in `resources/data/` and tracked via Git LFS:
   - Victim age (10%)
   - Temporal proximity (7%)
   - Victim race (3%)
+- Dataset tier system: Tier 1 (<10k instant), Tier 2 (10-50k with estimate), Tier 3 (>50k requires filtering)
 - Configurable detection thresholds (min cluster size, max solve rate)
 - Connected component detection using DFS
 - *Note: Cluster UI currently shows "Coming Soon" placeholder while being refined*
+
+✅ **Case Similarity ("Find Similar")**
+- 7-factor weighted similarity scoring:
+  - Weapon type (30%)
+  - Geographic proximity (25%)
+  - Victim age (20%)
+  - Temporal proximity (15%)
+  - Victim race (5%)
+  - Circumstance (3%)
+  - Relationship (2%)
+- Haversine distance calculation for geographic scoring
+- Same victim sex matching as baseline filter
+- Factor breakdown display in UI
 
 ✅ **Export Capabilities**
 - Export filtered case results to CSV
@@ -262,16 +276,12 @@ All data files are stored in `resources/data/` and tracked via Git LFS:
 - Zero compilation errors
 
 ✅ **Complete Documentation**
-- **DEVELOPMENT.md** (1,200 lines): Complete developer guide with setup, architecture, testing, and contributing guidelines
-- **API.md** (1,400 lines): Full REST API reference with request/response examples
-- **PERFORMANCE_OPTIMIZATION_SUMMARY.md** (4,000 lines): Optimization strategies and benchmarks
-- **IMPLEMENTATION_PLAN.md**: Detailed phase-by-phase implementation roadmap
+- **DEVELOPMENT.md**: Complete developer guide with setup, architecture, testing, and contributing guidelines
+- **API.md**: Full REST API reference with request/response examples
 
 ---
 
-### Phase 2 Features (In Progress 🚧)
-
-See [`docs/MAP_TIMELINE_STATISTICS_PLAN.md`](docs/MAP_TIMELINE_STATISTICS_PLAN.md) for detailed implementation plan.
+### Visualization Features (In Progress 🚧)
 
 🚧 **Map Visualization**
 - Interactive geographic visualization using Leaflet + React-Leaflet
@@ -297,7 +307,7 @@ See [`docs/MAP_TIMELINE_STATISTICS_PLAN.md`](docs/MAP_TIMELINE_STATISTICS_PLAN.m
 - Backend: `/api/statistics/*` endpoints implemented
 - Frontend: Components in `src/components/statistics/`
 
-🔧 **Cluster Feature Refinement**
+🔧 **Cluster UI Refinement**
 - Currently showing "Coming Soon" placeholder
 - Algorithm implemented and working
 - UI being refined for better user experience
@@ -326,38 +336,36 @@ See [`docs/MAP_TIMELINE_STATISTICS_PLAN.md`](docs/MAP_TIMELINE_STATISTICS_PLAN.m
 
 ## Documentation
 
-Comprehensive documentation is available in the `docs/` directory:
+Comprehensive documentation is available:
 
 | Document | Description |
 |----------|-------------|
 | [CLAUDE.md](CLAUDE.md) | Quick reference for AI assistants and project overview |
-| [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) | MVP Phase 1 implementation roadmap (complete) |
-| [docs/MAP_TIMELINE_STATISTICS_PLAN.md](docs/MAP_TIMELINE_STATISTICS_PLAN.md) | Phase 2 features implementation plan (current) |
 | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | Complete developer guide (setup, architecture, testing) |
 | [docs/API.md](docs/API.md) | Full REST API reference with examples |
-| [docs/PERFORMANCE_OPTIMIZATION_SUMMARY.md](docs/PERFORMANCE_OPTIMIZATION_SUMMARY.md) | Performance optimization strategies |
-| [docs/TEST_PLAN.md](docs/TEST_PLAN.md) | Testing strategy and coverage |
+| [redstring PRD.md](redstring%20PRD.md) | Complete product requirements document |
 
 ## Project Roadmap
 
-**✅ MVP Phase 1 (COMPLETE)**
+**✅ MVP (COMPLETE)**
 - Foundation and project setup
 - Electron + Python bridge
 - Database and data pipeline
-- Basic API and frontend skeleton
-- Clustering algorithm
+- API and frontend
+- Clustering algorithm with tier system
+- Case similarity "Find Similar" feature
 - Testing, theming, error handling, and documentation
 
-** Phase 2 (IN PROGRESS)**
+**🚧 Visualization Features (IN PROGRESS)**
 - Map visualization with Leaflet
 - Timeline visualization with Recharts
 - Statistics dashboard
-- Cluster feature refinement
+- Cluster UI refinement
 
-**🔮 Future Phases**
-- **Phase 3**: Radius-based clustering, case similarity "Find Similar" feature
-- **Phase 4**: Custom weight configuration UI, saved analyses
-- **Phase 5**: Advanced analytics, reporting, and data export options
+**🔮 Future Features**
+- Radius-based clustering
+- Custom weight configuration UI
+- Saved analyses
 
 ## API Endpoints
 
@@ -368,10 +376,11 @@ The backend provides the following API endpoint groups:
 | `/health` | Backend health check | ✅ Complete |
 | `/api/setup/*` | Database initialization | ✅ Complete |
 | `/api/cases/*` | Case queries and details | ✅ Complete |
-| `/api/clusters/*` | Cluster analysis | ✅ Complete |
-| `/api/map/*` | Map aggregation data | 🚧 Phase 2 |
-| `/api/timeline/*` | Timeline aggregation | 🚧 Phase 2 |
-| `/api/statistics/*` | Statistics dashboard | 🚧 Phase 2 |
+| `/api/clusters/*` | Cluster analysis (with preflight) | ✅ Complete |
+| `/api/similarity/*` | Case similarity search | ✅ Complete |
+| `/api/map/*` | Map aggregation data | 🚧 In Progress |
+| `/api/timeline/*` | Timeline aggregation | 🚧 In Progress |
+| `/api/statistics/*` | Statistics dashboard | 🚧 In Progress |
 
 See [docs/API.md](docs/API.md) for complete API documentation.
 

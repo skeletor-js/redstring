@@ -4,7 +4,7 @@
 
 **Redstring** is a desktop application for analyzing homicide data from the Murder Accountability Project (MAP). It helps researchers, journalists, and analysts explore 894,636 homicide records (1976-2023) to identify suspicious clusters of unsolved murders.
 
-**Status**: MVP Phase 1 COMPLETE + Phase 2 Features IN PROGRESS
+**Status**: MVP COMPLETE
 **Version**: 0.1.0
 **License**: MIT
 
@@ -35,7 +35,7 @@ redstring/
 ├── src/                # React frontend (TypeScript)
 │   ├── components/     # Organized by feature:
 │   │   ├── Layout/     # App shell (Header, Sidebar, Layout)
-│   │   ├── cases/      # Case table, detail modal, filters
+│   │   ├── cases/      # Case table, detail modal, similar cases modal
 │   │   ├── clusters/   # Cluster analysis (Coming Soon placeholder)
 │   │   ├── common/     # Shared components (ComingSoon)
 │   │   ├── filters/    # Filter panel and filter components
@@ -49,10 +49,10 @@ redstring/
 │   ├── hooks/          # Custom React hooks
 │   └── types/          # TypeScript type definitions
 ├── backend/            # Python FastAPI backend
-│   ├── analysis/       # Clustering & similarity algorithms
+│   ├── analysis/       # Clustering algorithm & case similarity scoring
 │   ├── database/       # SQLite schema & queries
 │   ├── models/         # Pydantic data models (case, cluster, map, statistics, timeline)
-│   ├── routes/         # API endpoints (cases, clusters, map, setup, statistics, timeline)
+│   ├── routes/         # API endpoints (cases, clusters, map, setup, statistics, timeline, similarity)
 │   └── services/       # Business logic
 ├── resources/          # Bundled data (Git LFS tracked)
 │   ├── data/           # 5 CSV files (~324MB total)
@@ -78,11 +78,18 @@ All in [`resources/data/`](resources/data/):
 4. Create indexes on all filterable columns
 
 ### Custom Clustering Algorithm
-- **Geographic grouping**: County-based (MVP) or radius-based (Phase 2)
+- **Geographic grouping**: County-based (MVP) or radius-based (future)
 - **Multi-factor similarity**: Weighted scoring across weapon, victim demographics, location, temporal proximity
 - **Detection thresholds**: Min cluster size (default: 5), max solve rate (default: 33%)
 - **Output**: Ranked clusters with similarity scores and matching factors
+- **Tier System**: Tier 1 (<10k cases, instant), Tier 2 (10-50k, with time estimate), Tier 3 (>50k, requires filtering)
 - **Note**: Cluster feature currently shows "Coming Soon" placeholder while being refined
+
+### Case Similarity Algorithm
+- **7-factor weighted scoring**: weapon (30%), geographic (25%), victim_age (20%), temporal (15%), victim_race (5%), circumstance (3%), relationship (2%)
+- **Geographic proximity**: Haversine distance calculation within 100-mile radius
+- **Victim sex matching**: Only compares cases with same victim sex
+- **Output**: Ranked similar cases with individual factor breakdowns
 
 ### Database Schema Highlights
 - `cases` table: 894,636 rows with both original labels and numeric codes
@@ -119,7 +126,8 @@ npm run package:mac  # macOS DMG
 ## Key Files to Know
 
 - [redstring PRD.md](redstring%20PRD.md) - Complete product requirements (2,000+ lines)
-- [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) - Detailed MVP Phase 1 roadmap
+- [docs/API.md](docs/API.md) - REST API reference
+- [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) - Developer guide
 - [package.json](package.json) - Node dependencies & scripts
 - [backend/pyproject.toml](backend/pyproject.toml) - Python tooling config
 - [vite.config.ts](vite.config.ts) - Vite build config with path aliases
@@ -168,7 +176,8 @@ npm run package:mac  # macOS DMG
 - Multi-factor similarity calculation algorithm (6 weighted factors)
 - County-based cluster detection with connected components (DFS)
 - Geographic utilities with Haversine distance calculation
-- Complete cluster API: analyze, details, cases, export (4 endpoints)
+- Complete cluster API: analyze, preflight, details, cases, export (5 endpoints)
+- Dataset tier classification (Tier 1/2/3 based on case count)
 - Full cluster analysis UI with configuration, results, and detail views
 - Configurable similarity weights with real-time validation
 - CSV export for cluster results and cases
@@ -182,34 +191,34 @@ npm run package:mac  # macOS DMG
 - Error handling: React ErrorBoundary + retry logic + Python rotating logger
 - Pre-commit hooks: Husky + lint-staged with ESLint, Prettier, Black, isort
 - Performance optimization review and documentation
-- Comprehensive documentation: DEVELOPMENT.md, API.md, PERFORMANCE_OPTIMIZATION_SUMMARY.md
 
 ---
 
-### Phase 2 Features - IN PROGRESS 🚧
+### Additional Features - IN PROGRESS 🚧
 
-Per [`docs/MAP_TIMELINE_STATISTICS_PLAN.md`](docs/MAP_TIMELINE_STATISTICS_PLAN.md):
-
-**Feature A - Cluster "Coming Soon" Placeholder** ✅:
-- [`ComingSoon`](src/components/common/ComingSoon.tsx:1) component created
-- Cluster tab shows friendly placeholder while feature is refined
-
-**Feature B - Map Visualization** 🚧:
+**Map Visualization** 🚧:
 - Backend: [`backend/routes/map.py`](backend/routes/map.py:1), [`backend/models/map.py`](backend/models/map.py:1), [`backend/services/map_service.py`](backend/services/map_service.py:1)
-- Frontend: [`src/components/map/`](src/components/map/) with MapView, MapControls, MapLegend, CaseMarkers, CountyLayer
+- Frontend: [`src/components/map/`](src/components/map/) with MapView, MapControls, MapLegend, CaseMarkers, CountyLayer, ChoroplethLayer, HeatmapLayer
 - Using Leaflet + React-Leaflet for interactive maps
-- Features: County aggregation, case markers, choropleth layers
+- Features: County aggregation, case markers, true choropleth layers with county polygons
 
-**Feature C - Timeline Visualization** 🚧:
+**Timeline Visualization** 🚧:
 - Backend: [`backend/routes/timeline.py`](backend/routes/timeline.py:1), [`backend/models/timeline.py`](backend/models/timeline.py:1), [`backend/services/timeline_service.py`](backend/services/timeline_service.py:1)
 - Frontend: [`src/components/timeline/`](src/components/timeline/) with TimelineView, TimelineChart, TimelineControls, TrendChart
 - Using Recharts for temporal analysis
 - Features: Year/month/decade aggregation, trend analysis
 
-**Feature D - Statistics Dashboard** 🚧:
+**Statistics Dashboard** 🚧:
 - Backend: [`backend/routes/statistics.py`](backend/routes/statistics.py:1), [`backend/models/statistics.py`](backend/models/statistics.py:1), [`backend/services/statistics_service.py`](backend/services/statistics_service.py:1)
 - Frontend: [`src/components/statistics/`](src/components/statistics/) with StatisticsView, SummaryCards, TrendChart, DemographicsChart, WeaponsChart, etc.
 - Features: Dashboard metrics, demographic breakdowns, weapon distribution, seasonal patterns
+
+**Case Similarity ("Find Similar")** ✅:
+- Backend: [`backend/routes/similarity.py`](backend/routes/similarity.py:1), [`backend/analysis/similarity.py`](backend/analysis/similarity.py:1)
+- Frontend: [`src/components/cases/SimilarCasesModal.tsx`](src/components/cases/SimilarCasesModal.tsx:1)
+- Hook: [`src/hooks/useSimilarity.ts`](src/hooks/useSimilarity.ts:1)
+- API: `GET /api/similarity/find/{case_id}` with 7-factor weighted scoring
+- Integration with case detail modal showing factor breakdowns
 
 ## Performance Targets
 
@@ -245,23 +254,25 @@ Per [`docs/MAP_TIMELINE_STATISTICS_PLAN.md`](docs/MAP_TIMELINE_STATISTICS_PLAN.m
 
 ## Feature Status
 
-**MVP Phase 1 (COMPLETE)**:
-- ✅ County-based clustering algorithm
-- ✅ Default similarity weights
+**Core Features (COMPLETE)**:
+
+- ✅ County-based clustering algorithm with tier system
+- ✅ Case similarity "Find Similar" with 7-factor scoring
 - ✅ All 14 filter types with pagination
 - ✅ CSV export for clusters and results
 - ✅ Theme system (Lab Mode / Evidence Room)
 - ✅ Comprehensive test coverage
 
-**Phase 2 Features (IN PROGRESS)**:
-- 🚧 Map visualization with Leaflet
+**Visualization Features (IN PROGRESS)**:
+
+- 🚧 Map visualization with Leaflet (choropleth layers implemented)
 - 🚧 Timeline visualization with Recharts
 - 🚧 Statistics dashboard
-- 🔧 Cluster feature refinement (showing "Coming Soon")
+- 🔧 Cluster UI refinement (showing "Coming Soon")
 
-**Future Phases**:
+**Future Features**:
+
 - ❌ Radius-based clustering
-- ❌ Case similarity "Find Similar"
 - ❌ Custom weight configuration UI
 - ❌ Saved analyses
 
@@ -273,10 +284,12 @@ Per [`docs/MAP_TIMELINE_STATISTICS_PLAN.md`](docs/MAP_TIMELINE_STATISTICS_PLAN.m
 **Log Location**: `{user app data}/logs/`
 
 **API Endpoints**:
+
 - `/health` - Backend health check
 - `/api/setup/*` - Database initialization
 - `/api/cases/*` - Case queries and details
-- `/api/clusters/*` - Cluster analysis
+- `/api/clusters/*` - Cluster analysis (with preflight tier check)
+- `/api/similarity/*` - Case similarity search
 - `/api/map/*` - Map aggregation data
 - `/api/timeline/*` - Timeline aggregation
 - `/api/statistics/*` - Statistics dashboard
@@ -290,11 +303,8 @@ Per [`docs/MAP_TIMELINE_STATISTICS_PLAN.md`](docs/MAP_TIMELINE_STATISTICS_PLAN.m
 
 - [`README.md`](README.md) - Quick start guide
 - [`redstring PRD.md`](redstring%20PRD.md) - Complete requirements (authoritative reference)
-- [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) - MVP Phase 1 implementation guide
-- [`docs/MAP_TIMELINE_STATISTICS_PLAN.md`](docs/MAP_TIMELINE_STATISTICS_PLAN.md) - Phase 2 features plan
 - [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) - Developer guide
 - [`docs/API.md`](docs/API.md) - API reference
-- [`docs/PERFORMANCE_OPTIMIZATION_SUMMARY.md`](docs/PERFORMANCE_OPTIMIZATION_SUMMARY.md) - Performance guide
 - [`resources/docs/Algorithm.pdf`](resources/docs/Algorithm.pdf) - MAP clustering algorithm
 - [`resources/docs/Murder Accountability Project Definitions.pdf`](resources/docs/Murder%20Accountability%20Project%20Definitions.pdf) - Data dictionary
 
