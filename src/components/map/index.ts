@@ -9,6 +9,7 @@ export { MapControls, default as MapControlsDefault } from './MapControls'
 export { MapLegend, default as MapLegendDefault } from './MapLegend'
 export { CountyLayer, default as CountyLayerDefault } from './CountyLayer'
 export { CaseMarkers, default as CaseMarkersDefault } from './CaseMarkers'
+export { HeatmapLayer } from './HeatmapLayer'
 
 // Re-export types for convenience
 export type {

@@ -77,9 +77,20 @@ const getLegendConfig = (metric: MapColorMetric) => {
 export const MapLegend: React.FC<MapLegendProps> = ({ colorMetric, viewMode }) => {
   const config = getLegendConfig(colorMetric)
 
-  // Don't show legend for heatmap mode (it has its own built-in legend)
+  // Show heatmap legend for heatmap mode
   if (viewMode === 'heatmap') {
-    return null
+    return (
+      <div className="map-legend">
+        <div className="heatmap-legend">
+          <div className="map-legend-title">Case Density</div>
+          <div className="heatmap-gradient-bar" />
+          <div className="heatmap-gradient-labels">
+            <span>Low</span>
+            <span>High</span>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (

@@ -5,7 +5,7 @@
  * Integrates with the filter system and provides view mode controls.
  */
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import L from 'leaflet'
 import { MapContainer, TileLayer, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -15,6 +15,7 @@ import { MapControls } from './MapControls'
 import { MapLegend } from './MapLegend'
 import { CountyLayer } from './CountyLayer'
 import { CaseMarkers } from './CaseMarkers'
+import { HeatmapLayer } from './HeatmapLayer'
 import './MapView.css'
 
 // Fix for default marker icons in Leaflet with webpack/vite
@@ -104,6 +105,18 @@ export const MapView: React.FC<MapViewProps> = ({ className }) => {
     setZoomLevel,
   } = useMapData()
 
+  // Transform county data to heatmap points
+  const heatmapPoints = useMemo(() => {
+    if (!countyData?.counties) return []
+
+    return countyData.counties.map((county) => ({
+      latitude: county.latitude,
+      longitude: county.longitude,
+      // Weight by unsolved cases for intensity
+      intensity: Math.min(county.unsolved_cases / 100, 1),
+    }))
+  }, [countyData])
+
   // Show loading state
   if (isLoading && !countyData) {
     return (
@@ -161,16 +174,30 @@ export const MapView: React.FC<MapViewProps> = ({ className }) => {
         {/* Track zoom level */}
         <ZoomHandler onZoomChange={setZoomLevel} />
 
-        {/* County layer - always visible */}
-        <CountyLayer
-          counties={countyData.counties}
-          colorMetric={colorMetric}
-          viewMode={viewMode}
-        />
+        {/* County layer - visible in choropleth and markers mode */}
+        {viewMode !== 'heatmap' && (
+          <CountyLayer
+            counties={countyData.counties}
+            colorMetric={colorMetric}
+            viewMode={viewMode}
+          />
+        )}
 
         {/* Case markers - visible when zoomed in or in markers mode */}
         {(viewMode === 'markers' || zoomLevel >= 8) && casePoints && (
           <CaseMarkers cases={casePoints.cases} />
+        )}
+
+        {/* Heatmap layer - visible in heatmap mode */}
+        {viewMode === 'heatmap' && heatmapPoints.length > 0 && (
+          <HeatmapLayer
+            points={heatmapPoints}
+            options={{
+              radius: 30,
+              blur: 20,
+              max: 1.0,
+            }}
+          />
         )}
       </MapContainer>
 

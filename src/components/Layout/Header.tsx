@@ -41,13 +41,6 @@ export function Header() {
 
       <div className="header-actions">
         <ThemeToggle />
-        <button
-          className="action-button settings-button"
-          aria-label="Settings"
-          title="Settings (Coming soon)"
-        >
-          ⚙️
-        </button>
       </div>
     </header>
   )

@@ -1,17 +1,19 @@
-import React from 'react';
-import { Dialog } from '@headlessui/react';
-import { useCase } from '../../hooks/useCases';
-import { useUIStore } from '../../stores/useUIStore';
-import { ExportButton } from './ExportButton';
-import './CaseDetail.css';
+import React, { useState } from 'react'
+import { Dialog } from '@headlessui/react'
+import { useCase } from '../../hooks/useCases'
+import { useUIStore } from '../../stores/useUIStore'
+import { ExportButton } from './ExportButton'
+import { SimilarCasesModal } from './SimilarCasesModal'
+import './CaseDetail.css'
 
 export const CaseDetail: React.FC = () => {
-  const { selectedCaseId, deselectCase } = useUIStore();
-  const { data: caseData, isLoading, isError } = useCase(selectedCaseId || '');
+  const { selectedCaseId, deselectCase, selectCase } = useUIStore()
+  const { data: caseData, isLoading, isError } = useCase(selectedCaseId || '')
+  const [showSimilarCases, setShowSimilarCases] = useState(false)
 
-  const isOpen = selectedCaseId !== null;
+  const isOpen = selectedCaseId !== null
 
-  if (!isOpen) return null;
+  if (!isOpen) return null
 
   return (
     <Dialog open={isOpen} onClose={deselectCase} className="case-detail-dialog">
@@ -150,6 +152,22 @@ export const CaseDetail: React.FC = () => {
                 </div>
 
                 <div className="case-detail-footer">
+                  <button
+                    type="button"
+                    className="find-similar-button"
+                    onClick={() => setShowSimilarCases(true)}
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <circle cx="11" cy="11" r="8" />
+                      <path d="M21 21l-4.35-4.35" />
+                    </svg>
+                    Find Similar Cases
+                  </button>
                   <ExportButton cases={[caseData]} label="Export Case" />
                 </div>
               </>
@@ -157,6 +175,18 @@ export const CaseDetail: React.FC = () => {
           </div>
         </Dialog.Panel>
       </div>
+
+      {/* Similar Cases Modal */}
+      {showSimilarCases && selectedCaseId && (
+        <SimilarCasesModal
+          caseId={selectedCaseId}
+          onClose={() => setShowSimilarCases(false)}
+          onSelectCase={(id) => {
+            setShowSimilarCases(false)
+            selectCase(id)
+          }}
+        />
+      )}
     </Dialog>
-  );
-};
+  )
+}
