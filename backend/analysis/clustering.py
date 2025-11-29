@@ -271,6 +271,9 @@ def detect_clusters(
         4. Return top clusters
     """
     logger.info(f"Detecting clusters in {len(cases)} cases with config: {config}")
+    logger.info(f"[DIAG] Config: min_cluster_size={config.min_cluster_size}, "
+                f"similarity_threshold={config.similarity_threshold}, "
+                f"max_solve_rate={config.max_solve_rate}")
 
     # Group cases by county
     county_groups: Dict[str, List[Case]] = defaultdict(list)
@@ -279,8 +282,20 @@ def detect_clusters(
         county_groups[county_key].append(case)
 
     logger.info(f"Grouped cases into {len(county_groups)} county groups")
+    
+    # Diagnostic: Count groups that meet minimum size
+    groups_meeting_min_size = sum(1 for cases_list in county_groups.values()
+                                   if len(cases_list) >= config.min_cluster_size)
+    logger.info(f"[DIAG] County groups with >= {config.min_cluster_size} cases: {groups_meeting_min_size}")
 
     all_clusters: List[ClusterResult] = []
+    
+    # Diagnostic counters
+    total_pairs_checked = 0
+    total_similar_pairs = 0
+    all_similarity_scores: List[float] = []
+    clusters_before_solve_rate_filter = 0
+    clusters_filtered_by_solve_rate = 0
 
     # Process each county group
     for county_key, county_cases in county_groups.items():
@@ -297,9 +312,12 @@ def detect_clusters(
                 case2 = county_cases[j]
 
                 similarity, _ = calculate_similarity(case1, case2, config.weights)
+                total_pairs_checked += 1
+                all_similarity_scores.append(similarity)
 
                 if similarity >= config.similarity_threshold:
                     similar_pairs.append((case1, case2, similarity))
+                    total_similar_pairs += 1
 
         # If no similar pairs found, skip this county
         if not similar_pairs:
@@ -345,15 +363,38 @@ def detect_clusters(
                 cluster = _build_cluster_result(
                     county_key, cluster_cases, cluster_similarities
                 )
+                clusters_before_solve_rate_filter += 1
 
                 # Filter by solve rate
                 if cluster.solve_rate <= config.max_solve_rate:
                     clusters_in_county.append(cluster)
+                else:
+                    clusters_filtered_by_solve_rate += 1
+                    logger.debug(f"[DIAG] Cluster filtered: solve_rate={cluster.solve_rate}% > max={config.max_solve_rate}%")
 
         all_clusters.extend(clusters_in_county)
 
     # Sort by unsolved count (descending)
     all_clusters.sort(key=lambda c: c.unsolved_cases, reverse=True)
+
+    # Diagnostic summary
+    logger.info(f"[DIAG] === CLUSTERING DIAGNOSTIC SUMMARY ===")
+    logger.info(f"[DIAG] Total pairs checked: {total_pairs_checked}")
+    logger.info(f"[DIAG] Pairs meeting similarity threshold ({config.similarity_threshold}%): {total_similar_pairs}")
+    if all_similarity_scores:
+        avg_score = sum(all_similarity_scores) / len(all_similarity_scores)
+        max_score = max(all_similarity_scores)
+        min_score = min(all_similarity_scores)
+        # Count scores in different ranges
+        scores_above_70 = sum(1 for s in all_similarity_scores if s >= 70)
+        scores_above_60 = sum(1 for s in all_similarity_scores if s >= 60)
+        scores_above_50 = sum(1 for s in all_similarity_scores if s >= 50)
+        logger.info(f"[DIAG] Similarity scores: min={min_score:.1f}, avg={avg_score:.1f}, max={max_score:.1f}")
+        logger.info(f"[DIAG] Scores >= 70%: {scores_above_70}, >= 60%: {scores_above_60}, >= 50%: {scores_above_50}")
+    logger.info(f"[DIAG] Clusters before solve rate filter: {clusters_before_solve_rate_filter}")
+    logger.info(f"[DIAG] Clusters filtered by solve rate: {clusters_filtered_by_solve_rate}")
+    logger.info(f"[DIAG] Final clusters returned: {len(all_clusters)}")
+    logger.info(f"[DIAG] === END DIAGNOSTIC SUMMARY ===")
 
     logger.info(f"Detected {len(all_clusters)} clusters meeting criteria")
     return all_clusters

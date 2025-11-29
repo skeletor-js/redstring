@@ -19,13 +19,189 @@ from analysis.clustering import (
 from database.connection import get_db_connection
 from models.case import CaseFilter
 from models.cluster import (
+    BASELINE_CASES,
+    BASELINE_TIME,
+    TIER_1_THRESHOLD,
+    TIER_2_THRESHOLD,
     ClusterAnalysisRequest,
     ClusterAnalysisResponse,
     ClusterDetailResponse,
+    ClusterPreflightResponse,
     ClusterSummaryResponse,
 )
 
 logger = logging.getLogger(__name__)
+
+
+# =============================================================================
+# PREFLIGHT FUNCTIONS
+# =============================================================================
+
+
+def get_case_count_for_clustering(case_filter: Optional[CaseFilter] = None) -> int:
+    """Count cases matching filter criteria for clustering analysis.
+
+    This is a lightweight operation that only counts records without
+    fetching full case data. Used for preflight checks before analysis.
+
+    Args:
+        case_filter: Optional filter criteria (CaseFilter model)
+
+    Returns:
+        Number of cases matching the filter criteria
+    """
+    logger.info("Counting cases for clustering preflight check")
+
+    # Build SQL query with filters (reuse filter logic from fetch_cases_for_clustering)
+    query = "SELECT COUNT(*) as count FROM cases WHERE 1=1"
+    params = []
+
+    # Apply filters if provided
+    if case_filter:
+        if case_filter.states:
+            placeholders = ",".join("?" * len(case_filter.states))
+            query += f" AND state IN ({placeholders})"
+            params.extend(case_filter.states)
+
+        if case_filter.year_min is not None:
+            query += " AND year >= ?"
+            params.append(case_filter.year_min)
+
+        if case_filter.year_max is not None:
+            query += " AND year <= ?"
+            params.append(case_filter.year_max)
+
+        if case_filter.solved is not None:
+            query += " AND solved = ?"
+            params.append(case_filter.solved)
+
+        if case_filter.vic_sex:
+            placeholders = ",".join("?" * len(case_filter.vic_sex))
+            query += f" AND vic_sex IN ({placeholders})"
+            params.extend(case_filter.vic_sex)
+
+        if case_filter.vic_race:
+            placeholders = ",".join("?" * len(case_filter.vic_race))
+            query += f" AND vic_race IN ({placeholders})"
+            params.extend(case_filter.vic_race)
+
+        if case_filter.weapon:
+            placeholders = ",".join("?" * len(case_filter.weapon))
+            query += f" AND weapon IN ({placeholders})"
+            params.extend(case_filter.weapon)
+
+        if case_filter.county:
+            placeholders = ",".join("?" * len(case_filter.county))
+            query += f" AND cntyfips IN ({placeholders})"
+            params.extend(case_filter.county)
+
+        # Age range handling
+        if case_filter.vic_age_min is not None or case_filter.vic_age_max is not None:
+            if case_filter.include_unknown_age:
+                # Include unknown ages (999) OR ages in range
+                age_conditions = []
+                if case_filter.vic_age_min is not None:
+                    age_conditions.append("vic_age >= ?")
+                    params.append(case_filter.vic_age_min)
+                if case_filter.vic_age_max is not None:
+                    age_conditions.append("vic_age <= ?")
+                    params.append(case_filter.vic_age_max)
+
+                if age_conditions:
+                    query += f" AND (vic_age = 999 OR ({' AND '.join(age_conditions)}))"
+            else:
+                # Only include ages in range (exclude 999)
+                if case_filter.vic_age_min is not None:
+                    query += " AND vic_age >= ?"
+                    params.append(case_filter.vic_age_min)
+                if case_filter.vic_age_max is not None:
+                    query += " AND vic_age <= ? AND vic_age != 999"
+                    params.append(case_filter.vic_age_max)
+
+    # Execute query
+    with get_db_connection() as conn:
+        result = conn.execute(query, params).fetchone()
+
+    count = result["count"]
+    logger.info(f"Preflight count: {count} cases")
+    return count
+
+
+def estimate_clustering_time(case_count: int) -> float:
+    """Estimate clustering analysis time based on case count.
+
+    Uses O(n²) formula based on empirical baseline measurements.
+    Baseline: 1000 cases takes ~5 seconds.
+
+    Args:
+        case_count: Number of cases to analyze
+
+    Returns:
+        Estimated time in seconds
+    """
+    if case_count <= 0:
+        return 0.0
+
+    estimated_time = BASELINE_TIME * (case_count / BASELINE_CASES) ** 2
+    return round(estimated_time, 1)
+
+
+def get_filter_suggestions(case_filter: Optional[CaseFilter]) -> List[str]:
+    """Generate suggestions for reducing dataset size.
+
+    Returns a list of filter suggestions based on which filters
+    are NOT currently applied.
+
+    Args:
+        case_filter: Current filter criteria (may be None)
+
+    Returns:
+        List of suggestion strings
+    """
+    suggestions = []
+
+    # Always suggest state filter if not applied
+    if not case_filter or not case_filter.states:
+        suggestions.append("Filter by specific state(s) to focus your analysis")
+
+    # Suggest year range if broad or not applied
+    if not case_filter or case_filter.year_min is None:
+        suggestions.append("Narrow the year range (e.g., last 10 years)")
+
+    # Suggest solved status filter
+    if not case_filter or case_filter.solved is None:
+        suggestions.append("Filter by solved/unsolved status")
+
+    # Suggest weapon filter
+    if not case_filter or not case_filter.weapon:
+        suggestions.append("Filter by specific weapon type(s)")
+
+    # Suggest victim demographics
+    if not case_filter or not case_filter.vic_sex:
+        suggestions.append("Filter by victim demographics (sex, age range)")
+
+    return suggestions
+
+
+def classify_dataset_tier(case_count: int) -> int:
+    """Classify dataset into tier based on case count.
+
+    Tier 1: < 10,000 cases - run immediately
+    Tier 2: 10,000 - 50,000 cases - show warning
+    Tier 3: > 50,000 cases - blocked
+
+    Args:
+        case_count: Number of cases
+
+    Returns:
+        Tier number (1, 2, or 3)
+    """
+    if case_count < TIER_1_THRESHOLD:
+        return 1
+    elif case_count <= TIER_2_THRESHOLD:
+        return 2
+    else:
+        return 3
 
 
 # =============================================================================

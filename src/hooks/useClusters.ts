@@ -11,10 +11,14 @@ import type {
   ClusterAnalysisRequest,
   ClusterAnalysisResponse,
   ClusterDetail,
+  ClusterPreflightResponse,
 } from '../types/cluster'
+import type { FilterState } from '../types/filter'
 import type { Case } from '../types/case'
 import {
   analyzeCluster,
+  clusterPreflight,
+  ClusterTierValidationError,
   exportClusterCases,
   getClusterCases,
   getClusterDetail,
@@ -22,10 +26,61 @@ import {
 import { AppError, logError } from '../utils/errorHandler'
 
 /**
+ * Hook for cluster analysis preflight check.
+ *
+ * Performs a quick check to determine the dataset size tier before
+ * running the full analysis. This allows the UI to warn users about
+ * large datasets or block analysis for very large datasets.
+ *
+ * @example
+ * ```tsx
+ * const { mutate: checkPreflight, isPending, data } = useClusterPreflight();
+ *
+ * const handlePreflight = () => {
+ *   checkPreflight({ config, filters }, {
+ *     onSuccess: (result) => {
+ *       if (result.tier === 3) {
+ *         // Show blocked message with filter suggestions
+ *       } else if (result.tier === 2) {
+ *         // Show confirmation dialog
+ *       } else {
+ *         // Proceed with analysis
+ *       }
+ *     }
+ *   });
+ * };
+ * ```
+ */
+export function useClusterPreflight() {
+  return useMutation<
+    ClusterPreflightResponse,
+    AppError | ClusterTierValidationError,
+    { config: ClusterAnalysisRequest; filters: FilterState }
+  >({
+    mutationFn: async ({ config, filters }) => {
+      try {
+        return await clusterPreflight(config, filters)
+      } catch (error) {
+        logError(error, {
+          config,
+          filters,
+          context: 'useClusterPreflight',
+        })
+        throw error
+      }
+    },
+    mutationKey: ['cluster-preflight'],
+    // No retry for preflight - it's a quick check
+    retry: false,
+  })
+}
+
+/**
  * Hook for running cluster analysis.
  *
  * Uses mutation since analysis is a POST request and should not be cached.
  * Includes error handling and logging for analysis failures.
+ * Supports the `force` parameter for Tier 2 datasets that require confirmation.
  *
  * @example
  * ```tsx
@@ -33,25 +88,39 @@ import { AppError, logError } from '../utils/errorHandler'
  *
  * const handleAnalyze = () => {
  *   mutate({
- *     min_cluster_size: 5,
- *     max_solve_rate: 33.0,
- *     similarity_threshold: 70.0,
+ *     config: {
+ *       min_cluster_size: 5,
+ *       max_solve_rate: 33.0,
+ *       similarity_threshold: 70.0,
+ *     },
+ *     filters: currentFilters,
+ *     force: false, // Set to true after user confirms Tier 2
  *   }, {
  *     onError: (error) => {
- *       toast.error(getUserMessage(error));
+ *       if (error instanceof ClusterTierValidationError) {
+ *         // Handle tier validation error (show confirmation or blocked message)
+ *       } else {
+ *         toast.error(getUserMessage(error));
+ *       }
  *     }
  *   });
  * };
  * ```
  */
 export function useClusterAnalysis() {
-  return useMutation<ClusterAnalysisResponse, AppError, ClusterAnalysisRequest>({
-    mutationFn: async (request) => {
+  return useMutation<
+    ClusterAnalysisResponse,
+    AppError | ClusterTierValidationError,
+    { config: ClusterAnalysisRequest; filters: FilterState; force?: boolean }
+  >({
+    mutationFn: async ({ config, filters, force = false }) => {
       try {
-        return await analyzeCluster(request)
+        return await analyzeCluster(config, filters, force)
       } catch (error) {
         logError(error, {
-          request,
+          config,
+          filters,
+          force,
           context: 'useClusterAnalysis',
         })
         throw error
@@ -59,9 +128,17 @@ export function useClusterAnalysis() {
     },
     mutationKey: ['cluster-analysis'],
     retry: (failureCount, error) => {
+      // Don't retry tier validation errors
+      if (error instanceof ClusterTierValidationError) {
+        return false
+      }
       // Retry up to 1 time for retryable errors (analysis is expensive)
       if (failureCount >= 1) return false
-      return error?.retryable ?? false
+      // Check if error has retryable property (AppError)
+      if (error && typeof error === 'object' && 'retryable' in error) {
+        return (error as AppError).retryable ?? false
+      }
+      return false
     },
     retryDelay: 2000, // 2 seconds
   })

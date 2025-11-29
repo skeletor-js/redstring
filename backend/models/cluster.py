@@ -10,6 +10,19 @@ from pydantic import BaseModel, Field
 
 
 # =============================================================================
+# CONSTANTS
+# =============================================================================
+
+# Tier thresholds for dataset size limits
+TIER_1_THRESHOLD = 10000  # Cases below this run immediately
+TIER_2_THRESHOLD = 50000  # Cases below this show warning, above is blocked
+
+# Time estimation constants (based on O(n²) complexity)
+BASELINE_CASES = 1000
+BASELINE_TIME = 5.0  # seconds
+
+
+# =============================================================================
 # REQUEST MODELS
 # =============================================================================
 
@@ -187,4 +200,28 @@ class ClusterExportFormat(BaseModel):
     )
     format: str = Field(
         "csv", description="Export format (currently only 'csv' supported)"
+    )
+
+
+# =============================================================================
+# PREFLIGHT MODELS
+# =============================================================================
+
+
+class ClusterPreflightResponse(BaseModel):
+    """Response for cluster analysis preflight check.
+
+    Provides case count and tier classification to help the frontend
+    decide whether to proceed, warn, or block the analysis.
+    """
+
+    case_count: int = Field(description="Number of cases matching filter criteria")
+    tier: int = Field(description="Dataset size tier classification (1, 2, or 3)")
+    estimated_time_seconds: Optional[float] = Field(
+        None, description="Estimated analysis time in seconds (for tier 2)"
+    )
+    can_proceed: bool = Field(description="Whether analysis can proceed")
+    message: str = Field(description="User-friendly message about the dataset size")
+    filter_suggestions: Optional[List[str]] = Field(
+        None, description="Suggestions for reducing dataset size (for tier 3)"
     )
