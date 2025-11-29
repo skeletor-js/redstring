@@ -1,5 +1,7 @@
 # Redstring - Murder Accountability Project Case Analyzer
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 **Status:** MVP Phase 1 Complete ✅ | Phase 2 Features In Progress 🚧
 **Version:** 0.1.0
 **License:** MIT
