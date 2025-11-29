@@ -40,3 +40,34 @@ export interface MapCasesResponse {
 
 export type MapViewMode = 'markers' | 'choropleth' | 'heatmap'
 export type MapColorMetric = 'solve_rate' | 'total_cases' | 'unsolved_cases'
+
+/**
+ * GeoJSON types for county boundaries
+ */
+export interface CountyFeatureProperties {
+  GEOID: string // FIPS code
+  NAME: string
+  STATE: string
+  // Our case data merged in
+  total_cases?: number
+  solved_cases?: number
+  unsolved_cases?: number
+  solve_rate?: number
+  state_name?: string
+  county_name?: string
+}
+
+export interface CountyFeature {
+  type: 'Feature'
+  id?: string | number
+  properties: CountyFeatureProperties
+  geometry: {
+    type: 'Polygon' | 'MultiPolygon'
+    coordinates: number[][][] | number[][][][]
+  }
+}
+
+export interface CountyGeoJSON {
+  type: 'FeatureCollection'
+  features: CountyFeature[]
+}
